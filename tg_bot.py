@@ -16,6 +16,5 @@ def main():
 
 
 
-if __name__ == '__main__':
-    print("\t> live")
-    asyncio.run(main())
+if __name__ == "__main__":
+    print('started tg_bot.py')

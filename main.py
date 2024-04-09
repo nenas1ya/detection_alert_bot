@@ -7,16 +7,15 @@ from stk_parser import get_detections, get_stk_token
 
 
 
-async def check_detections_by_time(seconds_to_wait: int, token=None):
-    d = await get_detections(token=token)
+async def check_detections_by_time(seconds_to_wait: int):
+    d = await get_detections()
     print(f'awaiting detections: {len(d)}')
     await asyncio.sleep(seconds_to_wait)
 
 
 
 while True:
-    token = asyncio.run(get_stk_token())
-    asyncio.run(check_detections_by_time(60, token))
+    asyncio.run(check_detections_by_time(60))
 
 
 # TODO:

@@ -14,14 +14,14 @@ STK_PASSWORD = os.environ.get('STK_PASSWORD')
 STK_ACCESS_TOKEN = ''
 PREMOD_URL = 'http://fku-ural.stk-drive.ru/api/detections/'
 
-async def get_stk_token() -> str:
+async def get_stk_token():
     '''возвращает токен по логин:паролю '''
     async with aiohttp.ClientSession(trust_env = True) as session:
         async with session.post(
                 url='http://fku-ural.stk-drive.ru/api/users/token/',
                 data={"username": STK_LOGIN, "password": STK_PASSWORD}
             ) as response:
-            return json.loads(str(await response.text())).get("access") if response.status == 200 else response.status
+            return json.loads(str(await response.text())).get("access")
     
 
 async def get_detections(token:str, status='AWAITING_VALIDATION',created_gte='2024-03-31') -> list[dict]:
@@ -31,8 +31,11 @@ async def get_detections(token:str, status='AWAITING_VALIDATION',created_gte='20
                 url= f'{PREMOD_URL}?validation_status={status}&created_at__gte={created_gte}T19:00:00.000Z',
                 headers={'Authorization': f'Bearer {token}'}
             ) as response:
-            return [{el.get('id'):f'{(el.get("created_at"))[5:-13]}'} for el in json.loads(await response.text())] if response.status == 200 else response.status
-
+            res_text = await response.text()
+            if response.status != 200:
+                return [response.status, res_text, token]
+            data = [{el.get('id'):f'{(el.get("created_at"))[5:-13]}'} for el in json.loads(res_text)]
+            return [response.status, data]
     
 if __name__ == "__main__":
     print('from stk_parser.py')

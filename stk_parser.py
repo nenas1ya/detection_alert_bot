@@ -37,4 +37,4 @@ def get_detections(token=get_stk_token(), status='AWAITING_VALIDATION',created_g
 
 if __name__ == "__main__":
     print('from stk_parser.py')
-    print(get_awaiting_detections(get_stk_token()))
+    print(get_detections(get_stk_token()))

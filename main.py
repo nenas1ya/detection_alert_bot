@@ -3,11 +3,11 @@ from os.path import join, dirname
 from dotenv import load_dotenv
 import time
 
-from stk_parser import get_awaiting_detections
-detects = get_awaiting_detections()
+from stk_parser import get_detections
+detects = get_detections()
+print(len(detects))
 
-
-while True:
+#while True:
     # connect to stk
         # checking 
             # reqst detections, calc count
@@ -21,8 +21,8 @@ while True:
     #TODO 
         # inchat validating with img+buttons
 
-    pass
-print(len(detects))
+#   pass
+
 
 
 

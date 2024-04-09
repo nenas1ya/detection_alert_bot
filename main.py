@@ -2,27 +2,24 @@
 import time
 import asyncio
 from datetime import  datetime
-from os.path import join, dirname
-from dotenv import load_dotenv
 from stk_parser import get_detections, get_stk_token
 
-
+#TODO remake funtional to OOP
+#     try catch
 
 async def main():
     token = await get_stk_token()
     while True:
-        d = await get_detections(token)
-        if type(d) == int:
-            print(d)
+        status, d = await get_detections(token)
+        if status != 200:
+            print(status)
             token = await get_stk_token()
-            print(f'new token: {token}')
+            print(f'new token: ..{token[:-10]}')
             continue
         print(f'{datetime.now().hour}:{datetime.now().minute} - awaiting {len(d)}')
         await asyncio.sleep(40)
 
 asyncio.run(main())
 
-# TODO:
-# change token forwarding
 
 

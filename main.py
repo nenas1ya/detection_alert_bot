@@ -14,8 +14,8 @@ async def check_detections_by_time(seconds_to_wait: int):
 
 
 
-
-asyncio.run(check_detections_by_time(60))
+while True:
+    asyncio.run(check_detections_by_time(60))
 
 
 

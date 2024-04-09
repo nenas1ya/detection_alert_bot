@@ -21,7 +21,7 @@ async def get_stk_token() -> str:
     '''возвращает токен по логин:паролю '''
     
     
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(trust_env = True) as session:
         async with session.post(
                 url='http://fku-ural.stk-drive.ru/api/users/token/',
                 data={"username": STK_LOGIN, "password": STK_PASSWORD}
@@ -34,7 +34,7 @@ async def get_detections(token=None, status='AWAITING_VALIDATION',created_gte='2
     if not token:
         token = await get_stk_token()
 
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(trust_env = True) as session:
         async with session.get(
                 url= f'{PREMOD_URL}?validation_status={status}&created_at__gte={created_gte}T19:00:00.000Z',
                 headers={'Authorization': f'Bearer {token}'}

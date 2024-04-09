@@ -12,7 +12,6 @@ async def main():
     while True:
         status, d = await get_detections(token)
         if status != 200:
-            print(status)
             token = await get_stk_token()
             print(f'new token: ..{token[:-10]}')
             continue

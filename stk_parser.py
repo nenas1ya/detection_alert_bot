@@ -13,7 +13,6 @@ STK_LOGIN = os.environ.get('STK_LOGIN')
 STK_PASSWORD = os.environ.get('STK_PASSWORD')
 STK_ACCESS_TOKEN = ''
 PREMOD_URL = 'http://fku-ural.stk-drive.ru/api/detections/'
-VALIDATION_STATUS =  'AWAITING_VALIDATION'
 
 def get_stk_token() -> str:
     '''возвращает токен по логин:паролю '''
@@ -24,10 +23,10 @@ def get_stk_token() -> str:
                     ).text
                 ).get("access")
 
-def get_awaiting_detections(token=get_stk_token(), status='AWAITING_VALIDATION',created_gte='2024-03-31') -> list[dict]:
+def get_detections(token=get_stk_token(), status='AWAITING_VALIDATION',created_gte='2024-03-31') -> list[dict]:
     '''под токеном получает детекции с created_gte даты по настоящее время, возвращает список словарей id:created_at'''
     response = requests.get(
-            url= f'{PREMOD_URL}?validation_status={VALIDATION_STATUS}&created_at__gte={created_gte}T19:00:00.000Z',
+            url= f'{PREMOD_URL}?validation_status={status}&created_at__gte={created_gte}T19:00:00.000Z',
             headers={'Authorization': f'Bearer {token}'},
             verify=False)
     if response.status_code != 200:

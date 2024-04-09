@@ -10,7 +10,7 @@ from stk_parser import get_detections
 async def check_detections_by_time(seconds_to_wait: int):
     d = await get_detections()
     print(f'awaiting detections: {len(d)}')
-    asyncio.sleep(seconds_to_wait)
+    await asyncio.sleep(seconds_to_wait)
 
 
 

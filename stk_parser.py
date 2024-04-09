@@ -1,7 +1,7 @@
 import aiohttp
 import asyncio
 import json
-import time
+from datetime import datetime
 import os
 
 
@@ -19,8 +19,6 @@ PREMOD_URL = 'http://fku-ural.stk-drive.ru/api/detections/'
 
 async def get_stk_token() -> str:
     '''возвращает токен по логин:паролю '''
-    
-    
     async with aiohttp.ClientSession(trust_env = True) as session:
         async with session.post(
                 url='http://fku-ural.stk-drive.ru/api/users/token/',
@@ -33,6 +31,7 @@ async def get_detections(token=None, status='AWAITING_VALIDATION',created_gte='2
     '''под токеном получает детекции с created_gte даты по настоящее время, возвращает список словарей id:created_at'''
     if not token:
         token = await get_stk_token()
+        print(datetime.now(), 'new token taken')
 
     async with aiohttp.ClientSession(trust_env = True) as session:
         async with session.get(
@@ -43,6 +42,7 @@ async def get_detections(token=None, status='AWAITING_VALIDATION',created_gte='2
                 print(response.status, await response.text(), token)
                 return response.status
             # формирует data [{id: created_at}, ...] из response
+            print(datetime.now().hour, datetime.now().minute, sep=':',end=' ')
             return [{el.get('id'):f'{(el.get("created_at"))[5:-13]}'} for el in json.loads(await response.text())] 
 
     

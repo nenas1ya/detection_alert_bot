@@ -20,7 +20,7 @@ def main():
     def add_kb_msg():
         pass 
 
-    def edit_mes():
+    def edit_msg():
         pass
 
     def delete_msg():

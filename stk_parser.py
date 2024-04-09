@@ -2,6 +2,8 @@ import requests
 import json
 import time
 import os
+import asyncio
+
 from datetime import date, time, datetime
 from os.path import join, dirname
 from dotenv import load_dotenv
@@ -14,7 +16,7 @@ STK_PASSWORD = os.environ.get('STK_PASSWORD')
 STK_ACCESS_TOKEN = ''
 PREMOD_URL = 'http://fku-ural.stk-drive.ru/api/detections/'
 
-def get_stk_token() -> str:
+async def get_stk_token() -> str:
     '''возвращает токен по логин:паролю '''
     return json.loads(
                 requests.post(
@@ -23,7 +25,7 @@ def get_stk_token() -> str:
                     ).text
                 ).get("access")
 
-def get_detections(token=get_stk_token(), status='AWAITING_VALIDATION',created_gte='2024-03-31') -> list[dict]:
+async def get_detections(token=get_stk_token(), status='AWAITING_VALIDATION',created_gte='2024-03-31') -> list[dict]:
     '''под токеном получает детекции с created_gte даты по настоящее время, возвращает список словарей id:created_at'''
     response = requests.get(
             url= f'{PREMOD_URL}?validation_status={status}&created_at__gte={created_gte}T19:00:00.000Z',

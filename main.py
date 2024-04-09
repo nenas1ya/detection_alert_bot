@@ -6,6 +6,22 @@ import time
 from stk_parser import get_awaiting_detections
 detects = get_awaiting_detections()
 
+
+while True:
+    # connect to stk
+        # checking 
+            # reqst detections, calc count
+            # if no msg -> send detections count
+            # if msg exist -> edit msg or delete and send new
+        # commands
+            # refresh - send new msg with actual count now
+            # stat - some statistic
+        
+
+    #TODO 
+        # inchat validating with img+buttons
+
+    pass
 print(len(detects))
 
 

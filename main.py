@@ -21,7 +21,6 @@ print(len(detects))
     #TODO 
         # inchat validating with img+buttons
 
-#   pass
 
 
 

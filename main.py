@@ -8,7 +8,7 @@ from stk_parser import get_detections, get_stk_token
 #     change prints to tg_bot module
 
 
-async def main():
+async def main() -> None:
 
     '''take [detections] from stk_parser, manipulate and use tg_bot to send it and'''
 

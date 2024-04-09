@@ -1,33 +1,35 @@
 import asyncio
+import logging
+import sys
 import aiogram
 import os
 from os.path import join, dirname
 from dotenv import load_dotenv
 
 from aiogram import Bot, Dispatcher, F
-from aiogram.filters.command import Command
+from aiogram.filters import CommandStart
 from aiogram.types import Message
 
-BOT_TOKEN = os.environ.get('BOT_TOKEN')
+load_dotenv(join(dirname(__file__),'.env'))
+BOT_TOKEN : str = os.environ.get('BOT_TOKEN', '')
+dp = Dispatcher()
+bot = Bot(token=BOT_TOKEN)
+# 6359870347 my DM
+
+@dp.message(CommandStart())
+async def start_handler(message: Message) -> None:
+    await message.answer(str(message.chat.id))
+    print(str(message.chat.id))
 
 
-def main():
-    pass
+async def send_msg(chat_id, text):
+    await bot.send_message(chat_id,text)
 
-    def send_msg():
-        pass
-    
-    def add_kb_msg():
-        pass 
+async def main() -> None:
+    await dp.start_polling(bot)
 
-    def edit_msg():
-        pass
-
-    def delete_msg():
-        pass
-
-    def loopback():
-        pass
 
 if __name__ == "__main__":
-    print('started tg_bot.py')
+    logging.basicConfig(level=logging.INFO, stream=sys.stdout)
+    asyncio.run(main())
+

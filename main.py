@@ -129,7 +129,6 @@ async def inline_handler(inline_query: InlineQuery):
     await inline_query.answer(result, is_personal=True, cache_time=30) # type: ignore
 
 if __name__ == "__main__":
-    print(str(datetime.now())[:10])
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)
     asyncio.run(main())
 

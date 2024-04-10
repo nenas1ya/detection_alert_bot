@@ -27,12 +27,12 @@ async def get_stk_token() -> str:
 async def get_detections(
             token:str,
             status='AWAITING_VALIDATION',
-            created_gte='2024-03-31'
+            created_gte='2024-04-01'
         ) -> list[Any]:
 
     async with aiohttp.ClientSession(trust_env=True) as session:
         async with session.get(
-                url= f'{PREMOD_URL}?validation_status={status}&created_at__gte={created_gte}T19:00:00.000Z',
+                url= f'{PREMOD_URL}?validation_status={status}&created_at__gte={created_gte}T00:00:00.000Z',
                 headers={'Authorization': f'Bearer {token}'}
             ) as response:
 
@@ -47,4 +47,4 @@ async def get_detections(
                 # make small [{id:created_at}, {..}, ..] from big [response with all information]
                 data.append({el.get('id'):f'{(el.get("created_at"))[5:-13]}'})
 
-            return [response.status, data]
+            return [response.status, data, len(data)]

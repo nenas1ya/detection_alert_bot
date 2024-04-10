@@ -13,7 +13,8 @@ from stk_parser import get_detections, get_stk_token
 
 #TODO remake funtional to OOP
 #     try catch
-#     change prints to tg_bot module
+#     make statistic
+#     remake in OOP
 
 
 load_dotenv(join(dirname(__file__),'.env'))
@@ -35,10 +36,10 @@ async def start_handler(message: Message) -> None:
         'on',
         prefix='/!.'))
 async def on_handler(message: Message, command: CommandObject) -> None:
-    '''continious checking'''
+    '''continious checking for awaiting detections'''
     token = await get_stk_token()
     new_msg_ = True
-    exterminate_timer = 3 # in minute
+    exterminate_timer = 60 # in minute
     t = command.args
     if t:
         match t[-1]:
@@ -55,12 +56,12 @@ async def on_handler(message: Message, command: CommandObject) -> None:
                 timeout = int(t)
                 timeout_hint = f'{t[:-1]} seconds'
     else: 
-        timeout = 60
+        timeout = 58
         timeout_hint = '1 minute'
     await bot.send_message(message.chat.id, f'start polling every {timeout_hint}')
 
     while True:
-        status, d = await get_detections(token)
+        status, d, d_count = await get_detections(token) 
         if status != 200:
             # bad request
             token = await get_stk_token()
@@ -72,7 +73,7 @@ async def on_handler(message: Message, command: CommandObject) -> None:
             case 0: d_count = 'zero'
             case _: d_count = len(d)
 
-        d_now = f'{datetime.now().strftime("%H:%M:%S")} - {d_count} detections'
+        d_now = f'{d_count} detections'
         if new_msg_:
             sended = await bot.send_message(message.chat.id, d_now)
             new_msg_ = False

@@ -13,8 +13,7 @@ from aiogram.types import Message
 load_dotenv(join(dirname(__file__),'.env'))
 BOT_TOKEN : str = os.environ.get('BOT_TOKEN', '')
 dp = Dispatcher()
-bot = Bot(token=BOT_TOKEN)
-# 6359870347 my DM
+bot = Bot(BOT_TOKEN)
 
 @dp.message(CommandStart())
 async def start_handler(message: Message) -> None:
@@ -23,8 +22,11 @@ async def start_handler(message: Message) -> None:
 
 
 async def send_msg(chat_id, text):
-    await bot.send_message(chat_id,text)
+    return await bot.send_message(chat_id, text)
 
+async def edit_msg(text, chat_id, message_id):
+    await bot.edit_message_text(text, chat_id, message_id)
+    
 async def main() -> None:
     await dp.start_polling(bot)
 

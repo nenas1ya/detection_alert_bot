@@ -1,5 +1,6 @@
 # STK_PARSER BUT IN CLASSES
 import asyncio
+from dataclasses import dataclass
 from datetime import datetime
 from json import loads
 import os
@@ -8,20 +9,16 @@ from aiohttp import ClientSession as http
 from os.path import join, dirname
 from dotenv import load_dotenv
 
+load_dotenv(join(dirname(__file__),'.env'))
 
-
-
-
+@dataclass
 class Parser():
     
+    login: str = os.environ.get('STK_LOGIN', '')
+    passw: str = os.environ.get('STK_PASSWORD', '')
+    d_url: str = 'http://fku-ural.stk-drive.ru/api/detections/'
+    t_url: str = 'http://fku-ural.stk-drive.ru/api/users/token/'
 
-    def __init__(self) -> None:
-        load_dotenv(join(dirname(__file__),'.env'))
-        self.login = os.environ.get('STK_LOGIN')
-        self.passw = os.environ.get('STK_PASSWORD')
-        self.d_url = 'http://fku-ural.stk-drive.ru/api/detections/'
-        self.t_url = 'http://fku-ural.stk-drive.ru/api/users/token/'
-   
    
     async def get_token(self) -> str:
         async with http(trust_env=True) as session:
@@ -86,8 +83,11 @@ async def main():
     p = Parser()
     token = await p.get_token()
     detections = await p.get_all_detections(token=token)
-    for d in detections:
-        print(d.get('id'))
+    # for d in detections:
+        # print(d.get('id'))
+    print(len(detections))
 
-asyncio.run(main())
+if __name__ == '__main__':
+    print(f'{datetime.now().strftime("%X.%f")[:-3]} | 200 | start from stk_parserB.py')
+    asyncio.run(main())
 

@@ -66,7 +66,7 @@ async def on_handler(message: Message, command: CommandObject) -> None:
             # bad request
             token = await get_stk_token()
 
-            print(f'taken new stk token: ..{token[:-10]}')
+            print(f'taken new stk token: ..{token[0][:-10]}')
             continue
 
         match len(d):

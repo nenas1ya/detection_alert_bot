@@ -11,11 +11,6 @@ from aiogram.types import Message, InlineQuery, InlineQueryResultArticle,InputTe
 
 from stk_parser import get_detections, get_stk_token
 
-#TODO remake funtional to OOP
-#     try catch
-#     make statistic
-#     remake in OOP
-
 
 load_dotenv(join(dirname(__file__),'.env'))
 BOT_TOKEN :str = os.environ.get('BOT_TOKEN', '')

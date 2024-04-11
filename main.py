@@ -48,7 +48,7 @@ async def on_handler(message: Message, command: CommandObject) -> None:
                 timeout_hint = f'{t[:-1]} seconds'
             case 'm': # 10m
                 timeout = int(t[:-1]) * 60 
-                timeout_hint = f'{t} minutes'
+                timeout_hint = f'{t[:-1]} minutes'
             case 'h': # 1h
                 timeout = int(t[:-1]) * 60 * 60
                 timeout_hint = f'{t[:-1]} hour'
@@ -73,7 +73,7 @@ async def on_handler(message: Message, command: CommandObject) -> None:
             case 0: d_count = 'zero'
             case _: d_count = len(d)
 
-        d_now = f'{d_count} detections'
+        d_now = f'{datetime.now().strftime("%H:%M:%S")} - {d_count} detections'
         if new_msg_:
             sended = await bot.send_message(message.chat.id, d_now)
             new_msg_ = False
@@ -109,7 +109,7 @@ async def now_handler(message: Message, command: CommandObject):
     )
     print(str(datetime.now())[:10])
     d_clicked = valid_count + invalid_count 
-    text = f'{await_count} awaiting now | {valid_count+invalid_count} clicked today'
+    text = f'{await_count} awaiting now'
     await bot.send_message(message.chat.id, text)
 
 
@@ -129,6 +129,7 @@ async def inline_handler(inline_query: InlineQuery):
     await inline_query.answer(result, is_personal=True, cache_time=30) # type: ignore
 
 if __name__ == "__main__":
+    print(str(datetime.now())[:10])
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)
     asyncio.run(main())
 

@@ -40,7 +40,7 @@ async def get_detections(
 
             if response.status != 200:
                 # invalid request
-                return [response.status, res_text]
+                return [response.status, res_text, '']
 
             data = []
             for el in json.loads(res_text):

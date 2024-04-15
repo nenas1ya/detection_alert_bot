@@ -49,7 +49,7 @@ async def on_handler(message: Message, command: CommandObject) -> None:
                 timeout_hint = f'{t[:-1]} hour'
             case _: # 137
                 timeout = int(t)
-                timeout_hint = f'{t[:-1]} seconds'
+                timeout_hint = f'{t} seconds'
     else: 
         timeout = 58
         timeout_hint = '1 minute'

@@ -34,7 +34,7 @@ async def on_handler(message: Message, command: CommandObject) -> None:
     '''continious checking for awaiting detections'''
     token = await get_stk_token()
     new_msg_ = True
-    exterminate_timer = 8220 # in secinds
+    exterminate_timer = 8220 # in seconds
     t = command.args
     if t:
         match t[-1]:
@@ -53,7 +53,8 @@ async def on_handler(message: Message, command: CommandObject) -> None:
     else: 
         timeout = 58
         timeout_hint = '1 minute'
-    await bot.send_message(message.chat.id, f'start polling every {timeout_hint}')
+    await bot.send_message(message.chat.id, f'update every {timeout_hint}\n'+
+                           f'alert every 137 minutes\n', disable_notification=True,)
 
     while True:
         status, d, d_count = await get_detections(token) 
@@ -68,19 +69,19 @@ async def on_handler(message: Message, command: CommandObject) -> None:
             case 0: d_count = 'zero'
             case _: d_count = len(d)
 
-        d_now = f'{datetime.now().strftime("%H:%M:%S")} - {d_count} detections'
+        d_now = f'`{datetime.now().strftime("%H:%M:%S")}` \- {d_count} detections' # type: ignore
         if new_msg_:
-            sended = await bot.send_message(message.chat.id, d_now)
+            sended = await bot.send_message(message.chat.id, d_now, disable_notification=True, parse_mode='MarkdownV2')
             new_msg_ = False
         else:
-            if (datetime.timestamp(datetime.now()) - datetime.timestamp(sended.date)) >= exterminate_timer:
+            if (int(datetime.timestamp(datetime.now())) - int(datetime.timestamp(sended.date))) >= exterminate_timer:
                 # delete old messages and send new
                 await bot.delete_message(sended.chat.id, sended.message_id)
-                sended = await bot.send_message(message.chat.id, d_now)
+                sended = await bot.send_message(message.chat.id, d_now, disable_notification=True, parse_mode='MarkdownV2')
                 
             else:
                 if sended:
-                    await bot.edit_message_text(d_now, sended.chat.id, sended.message_id)
+                    await bot.edit_message_text(d_now, sended.chat.id, sended.message_id, parse_mode='MarkdownV2')
 
         await asyncio.sleep(timeout) # in seconds
 

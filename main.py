@@ -34,7 +34,7 @@ async def on_handler(message: Message, command: CommandObject) -> None:
     '''continious checking for awaiting detections'''
     token = await get_stk_token()
     new_msg_ = True
-    exterminate_timer = 60 # in minute
+    exterminate_timer = 30 # in minute
     t = command.args
     if t:
         match t[-1]:
@@ -61,7 +61,7 @@ async def on_handler(message: Message, command: CommandObject) -> None:
             # bad request
             token = await get_stk_token()
 
-            print(f'taken new stk token: ..{token[0][:-10]}')
+            print(f'taken new stk token: ..{token[0][-4:]}')
             continue
 
         match len(d):

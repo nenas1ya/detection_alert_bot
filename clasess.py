@@ -5,6 +5,18 @@ from datetime import datetime
 from json import loads
 import os
 
+import asyncio, logging, sys, os
+from datetime import  datetime
+
+from os.path import join, dirname
+from dotenv import load_dotenv
+
+from aiogram import Bot, Dispatcher, F
+from aiogram.filters import CommandStart, Command, CommandObject
+from aiogram.types import Message, InlineQuery, InlineQueryResultArticle,InputTextMessageContent
+
+
+
 from aiohttp import ClientSession as http
 from os.path import join, dirname
 from dotenv import load_dotenv
@@ -78,6 +90,16 @@ class Parser():
         for detection in detections:
             pass
     
+
+class tg():
+
+
+
+    def d(self):
+        pass
+
+
+
 
 async def main():
     p = Parser()

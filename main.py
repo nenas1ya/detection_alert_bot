@@ -34,7 +34,7 @@ async def on_handler(message: Message, command: CommandObject) -> None:
     '''continious checking for awaiting detections'''
     token = await get_stk_token()
     new_msg_ = True
-    exterminate_timer = 30 # in minute
+    exterminate_timer = 8220 # in secinds
     t = command.args
     if t:
         match t[-1]:
@@ -73,7 +73,7 @@ async def on_handler(message: Message, command: CommandObject) -> None:
             sended = await bot.send_message(message.chat.id, d_now)
             new_msg_ = False
         else:
-            if (datetime.now().minute - sended.date.minute) >= exterminate_timer:
+            if (datetime.timestamp(datetime.now()) - datetime.timestamp(sended.date)) >= exterminate_timer:
                 # delete old messages and send new
                 await bot.delete_message(sended.chat.id, sended.message_id)
                 sended = await bot.send_message(message.chat.id, d_now)

@@ -15,6 +15,7 @@ from stk_parser import get_detections, get_stk_token
 load_dotenv(join(dirname(__file__),'.env'))
 BOT_TOKEN :str = os.environ.get('BOT_TOKEN', '')
 
+
 dp = Dispatcher()
 bot = Bot(BOT_TOKEN)
 
@@ -27,6 +28,7 @@ async def main() -> None:
 async def start_handler(message: Message) -> None:
     print('Alive!')
 
+
 @dp.message(Command(
         'on',
         prefix='/!.'))
@@ -34,7 +36,7 @@ async def on_handler(message: Message, command: CommandObject) -> None:
     '''continious checking for awaiting detections'''
     token = await get_stk_token()
     new_msg_ = True
-    exterminate_timer = 8220 # in seconds
+    exterminate_timer = 1200 # in seconds
     t = command.args
     if t:
         match t[-1]:
@@ -53,8 +55,7 @@ async def on_handler(message: Message, command: CommandObject) -> None:
     else: 
         timeout = 58
         timeout_hint = '1 minute'
-    await bot.send_message(message.chat.id, f'update every {timeout_hint}\n'+
-                           f'alert every 137 minutes\n', disable_notification=True,)
+    await bot.send_message(message.chat.id, f'update every {timeout_hint}\n', disable_notification=True,)
 
     while True:
         status, d, d_count = await get_detections(token) 
@@ -62,7 +63,7 @@ async def on_handler(message: Message, command: CommandObject) -> None:
             # bad request
             token = await get_stk_token()
 
-            print(f'taken new stk token: ..{token[0][-4:]}')
+            print(f'taken new stk token: ..{token[-8:]}')
             continue
 
         match len(d):

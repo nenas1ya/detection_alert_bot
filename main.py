@@ -58,32 +58,35 @@ async def on_handler(message: Message, command: CommandObject) -> None:
     await bot.send_message(message.chat.id, f'update every {timeout_hint}\n', disable_notification=True,)
 
     while True:
-        status, d, d_count = await get_detections(token) 
-        if status != 200:
-            # bad request
-            token = await get_stk_token()
+        try:
+            status, d, d_count = await get_detections(token) 
+            if status != 200:
+                # bad request
+                token = await get_stk_token()
 
-            print(f'taken new stk token: ..{token[-8:]}')
-            continue
+                print(f'taken new stk token: ..{token[-8:]}')
+                continue
 
-        match len(d):
-            case 0: d_count = 'zero'
-            case _: d_count = len(d)
+            match len(d):
+                case 0: d_count = 'zero'
+                case _: d_count = len(d)
 
-        d_now = f'`{datetime.now().strftime("%H:%M:%S")}` \- {d_count} detections' # type: ignore
-        if new_msg_:
-            sended = await bot.send_message(message.chat.id, d_now, disable_notification=True, parse_mode='MarkdownV2')
-            new_msg_ = False
-        else:
-            if (int(datetime.timestamp(datetime.now())) - int(datetime.timestamp(sended.date))) >= exterminate_timer:
-                # delete old messages and send new
-                await bot.delete_message(sended.chat.id, sended.message_id)
+            d_now = f'`{datetime.now().strftime("%H:%M:%S")}` \- {d_count} detections' # type: ignore
+            if new_msg_:
                 sended = await bot.send_message(message.chat.id, d_now, disable_notification=True, parse_mode='MarkdownV2')
-                
+                new_msg_ = False
             else:
-                if sended:
-                    await bot.edit_message_text(d_now, sended.chat.id, sended.message_id, parse_mode='MarkdownV2')
-
+                if (int(datetime.timestamp(datetime.now())) - int(datetime.timestamp(sended.date))) >= exterminate_timer:
+                    # delete old messages and send new
+                    await bot.delete_message(sended.chat.id, sended.message_id)
+                    sended = await bot.send_message(message.chat.id, d_now, disable_notification=True, parse_mode='MarkdownV2')
+                    
+                else:
+                    if sended:
+                        await bot.edit_message_text(d_now, sended.chat.id, sended.message_id, parse_mode='MarkdownV2')
+        except Exception as e:
+            print(e)
+            continue
         await asyncio.sleep(timeout) # in seconds
 
 

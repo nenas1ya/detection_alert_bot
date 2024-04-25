@@ -44,7 +44,7 @@ async def get_detections(
 
             data = []
             for el in json.loads(res_text):
-                # make small [{id:created_at}, {..}, ..] from big [response with all information]
+                # [{id:created_at}, {..}, ..] from [response with all information]
                 data.append({el.get('id'):f'{(el.get("created_at"))[5:-13]}'})
 
             return [response.status, data, len(data)]

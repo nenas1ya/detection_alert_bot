@@ -12,9 +12,8 @@ from aiogram.types import Message, InlineQuery, InlineQueryResultArticle,InputTe
 from stk_parser import get_detections, get_stk_token
 
 
-load_dotenv(find_dotenv())
+load_dotenv(find_dotenv(), verbose=True)
 BOT_TOKEN :str = os.environ.get('BOT_TOKEN', '')
-
 
 dp = Dispatcher()
 bot = Bot(BOT_TOKEN)
@@ -112,7 +111,13 @@ async def now_handler(message: Message, command: CommandObject):
     text = f'{await_count} awaiting now'
     await bot.send_message(message.chat.id, text)
 
-
+@dp.message(Command(
+        'restart','res','r',
+        prefix='/!.'))
+async def restart(message: Message, command: CommandObject):
+    sys.stdout.flush()
+    os.execv(sys.executable, ['python'] + sys.argv)
+     
 @dp.inline_query()
 async def inline_handler(inline_query: InlineQuery):
     token = await get_stk_token()
@@ -129,8 +134,9 @@ async def inline_handler(inline_query: InlineQuery):
     await inline_query.answer(result, is_personal=True, cache_time=30) # type: ignore
 
 if __name__ == "__main__":
-    print(str(datetime.now())[:10])
+    print('\n')
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)
     asyncio.run(main())
+    
 
 

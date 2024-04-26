@@ -6,7 +6,7 @@ import os
 from os.path import join, dirname
 from dotenv import load_dotenv, find_dotenv
 
-load_dotenv(find_dotenv())
+load_dotenv(find_dotenv(), verbose=True)
 STK_LOGIN = os.environ.get('STK_LOGIN')
 STK_PASSWORD = os.environ.get('STK_PASSWORD')
 PREMOD_URL = 'http://fku-ural.stk-drive.ru/api/detections/'

@@ -2,7 +2,7 @@ import asyncio, logging, sys, os
 from datetime import  datetime
 
 from os.path import join, dirname
-from dotenv import load_dotenv
+from dotenv import find_dotenv, load_dotenv
 
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import CommandStart, Command, CommandObject
@@ -12,7 +12,7 @@ from aiogram.types import Message, InlineQuery, InlineQueryResultArticle,InputTe
 from stk_parser import get_detections, get_stk_token
 
 
-load_dotenv(join(dirname(__file__),'.env'))
+load_dotenv(find_dotenv())
 BOT_TOKEN :str = os.environ.get('BOT_TOKEN', '')
 
 

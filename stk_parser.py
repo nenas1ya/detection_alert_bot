@@ -4,9 +4,9 @@ import json
 import os
 
 from os.path import join, dirname
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 
-load_dotenv(join(dirname(__file__),'.env'))
+load_dotenv(find_dotenv())
 STK_LOGIN = os.environ.get('STK_LOGIN')
 STK_PASSWORD = os.environ.get('STK_PASSWORD')
 PREMOD_URL = 'http://fku-ural.stk-drive.ru/api/detections/'

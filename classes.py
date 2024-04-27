@@ -1,29 +1,29 @@
-# STK_PARSER BUT IN CLASSES
-import asyncio
 import os
-from dataclasses import dataclass
-from datetime import datetime
-from json import loads
-from datetime import  datetime
+import asyncio
 import aiogram
+
+from dataclasses import dataclass
+from json import loads
 from dotenv import find_dotenv, load_dotenv
+from datetime import datetime
+from aiohttp import ClientSession as http
 
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import CommandStart, Command, CommandObject
 from aiogram.types import Message, InlineQuery, InlineQueryResultArticle,InputTextMessageContent
 
-from aiohttp import ClientSession as http
-from dotenv import load_dotenv
 
-load_dotenv(find_dotenv(), verbose=True)
+load_dotenv(
+    find_dotenv('.envb', raise_error_if_not_found=True),
+    verbose=True)
 
 @dataclass
 class Parser():
     
     login: str = os.environ.get('STK_LOGIN', '')
     passw: str = os.environ.get('STK_PASSWORD', '')
-    d_url: str = 'http://fku-ural.stk-drive.ru/api/detections/'
-    t_url: str = 'http://fku-ural.stk-drive.ru/api/users/token/'
+    d_url = 'http://fku-ural.stk-drive.ru/api/detections/'
+    t_url = 'http://fku-ural.stk-drive.ru/api/users/token/'
 
 
     async def get_token(
@@ -77,19 +77,10 @@ class Parser():
                                     f'    | creds: {self.login}:{self.passw}\n'
                                     f'    | resp: {await response.text()}')
 
-    
-    async def get_compact_detections(
-            self,
-            token: str
-    ):
-        detections = await self.get_all_detections(token)
-        for detection in detections:
-            pass
-    
 
 class TelegramBot():
     def __init__(self) -> None:
-        print(f'{datetime.now().strftime("%X.%f")[:-3]} | BOT | init')
+        pass
         
     async def connect(self):
         BOT_TOKEN = os.environ.get('BOT_TOKEN', '')

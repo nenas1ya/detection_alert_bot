@@ -66,7 +66,6 @@ async def on_handler(message: Message, command: CommandObject) -> None:
                 continue
 
             d_count = 'zero' if not d_count else d_count
-            print('get detections', d_count)
             d_now = f'`{datetime.now(tz=timezone(timedelta(hours=5))).strftime("%H:%M:%S")}` \- {d_count} detections' # type: ignore
             if new_msg_:
                 sended = await bot.send_message(message.chat.id, d_now, disable_notification=True, parse_mode='MarkdownV2')

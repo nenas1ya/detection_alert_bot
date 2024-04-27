@@ -115,7 +115,11 @@ async def now_handler(message: Message, command: CommandObject):
         'restart','res','r',
         prefix='/!.'))
 async def restart(message: Message, command: CommandObject):
+    print('handle restart:', message.message_id, command.text)
     sys.stdout.flush()
+    print('flush')
+    await asyncio.sleep(1)
+    print('exec')
     os.execv(sys.executable, ['python'] + sys.argv)
      
 @dp.inline_query()

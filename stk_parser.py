@@ -1,19 +1,22 @@
-from typing import Any
-import aiohttp
 import json
 import os
+from os.path import dirname, join
+from typing import Any
 
-from os.path import join, dirname
-from dotenv import load_dotenv, find_dotenv
+import aiohttp
+from dotenv import find_dotenv, load_dotenv
 
 load_dotenv(find_dotenv(), verbose=True)
 STK_LOGIN = os.environ.get('STK_LOGIN')
 STK_PASSWORD = os.environ.get('STK_PASSWORD')
 PREMOD_URL = 'http://fku-ural.stk-drive.ru/api/detections/'
 
-async def get_stk_token() -> str:
+async def get_stk_token():
 
-    '''login:pass -> beaver token'''
+    '''get token from stk api
+
+    :return str: bearer token
+    '''
 
     async with aiohttp.ClientSession(trust_env=True) as session:
         async with session.post(
@@ -21,7 +24,7 @@ async def get_stk_token() -> str:
                 data={"username": STK_LOGIN, "password": STK_PASSWORD}
             ) as response:
 
-            return json.loads(str(await response.text())).get("access")
+            return str(json.loads(str(await response.text())).get("access"))
 
 
 async def get_detections(
@@ -29,7 +32,13 @@ async def get_detections(
             status='AWAITING_VALIDATION',
             created_gte='2024-04-01'
         ) -> list[Any]:
+    '''get detections from api
 
+    :param str token: from get_stk_token()
+    :param str status: detections which status will be grabed, defaults to 'AWAITING_VALIDATION'
+    :param str created_gte: date and greater for detections, defaults to '2024-04-01'
+    :return list[Any]: list of detections, every decetction is dict
+    '''
     async with aiohttp.ClientSession(trust_env=True) as session:
         async with session.get(
                 url= f'{PREMOD_URL}?validation_status={status}&created_at__gte={created_gte}T00:00:00.000Z',

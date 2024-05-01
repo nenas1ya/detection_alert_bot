@@ -1,15 +1,16 @@
-import asyncio, logging, sys, os
+import asyncio
+import logging
+import os
+import sys
 from datetime import datetime, timedelta, timezone
-from datetime import  datetime
-from dotenv import find_dotenv, load_dotenv
 
 from aiogram import Bot, Dispatcher, F
-from aiogram.filters import CommandStart, Command, CommandObject
-from aiogram.types import Message, InlineQuery, InlineQueryResultArticle,InputTextMessageContent
-
+from aiogram.filters import Command, CommandObject, CommandStart
+from aiogram.types import (InlineQuery, InlineQueryResultArticle,
+                           InputTextMessageContent, Message)
+from dotenv import find_dotenv, load_dotenv
 
 from stk_parser import get_detections, get_stk_token
-
 
 load_dotenv(find_dotenv(), verbose=True)
 BOT_TOKEN :str = os.environ.get('BOT_TOKEN', '')
@@ -20,6 +21,7 @@ bot = Bot(BOT_TOKEN)
 
 
 async def main() -> None:
+
     await dp.start_polling(bot)
 
 
@@ -32,7 +34,11 @@ async def start_handler(message: Message) -> None:
         'on',
         prefix='/!.'))
 async def on_handler(message: Message, command: CommandObject) -> None:
-    '''continious checking for awaiting detections'''
+    '''contious checking detections and inform in telegram
+
+    :param Message message: returned message
+    :param CommandObject command: returned command with args
+    '''
     token = await get_stk_token()
     new_msg_ = True
     exterminate_timer = 1200 # in seconds
@@ -43,7 +49,7 @@ async def on_handler(message: Message, command: CommandObject) -> None:
                 timeout = int(t[:-1])
                 timeout_hint = f'{t[:-1]} seconds'
             case 'm': # 10m
-                timeout = int(t[:-1]) * 60 
+                timeout = int(t[:-1]) * 60
                 timeout_hint = f'{t[:-1]} minutes'
             case 'h': # 1h
                 timeout = int(t[:-1]) * 60 * 60
@@ -51,14 +57,14 @@ async def on_handler(message: Message, command: CommandObject) -> None:
             case _: # 137
                 timeout = int(t)
                 timeout_hint = f'{t} seconds'
-    else: 
+    else:
         timeout = 58
         timeout_hint = '1 minute'
     await bot.send_message(message.chat.id, f'update every {timeout_hint}\n', disable_notification=True,)
 
     while True:
         try:
-            status, d, d_count = await get_detections(token) 
+            status, d, d_count = await get_detections(token)
             if status != 200:
                 # bad request
                 token = await get_stk_token()
@@ -75,7 +81,7 @@ async def on_handler(message: Message, command: CommandObject) -> None:
                     # delete old messages and send new
                     await bot.delete_message(sended.chat.id, sended.message_id)
                     sended = await bot.send_message(message.chat.id, d_now, disable_notification=True, parse_mode='MarkdownV2')
-                    
+
                 else:
                     if sended:
                         await bot.edit_message_text(d_now, sended.chat.id, sended.message_id, parse_mode='MarkdownV2')
@@ -103,7 +109,7 @@ async def now_handler(message: Message, command: CommandObject):
         created_gte=str(datetime.now())[:10]
     )
     print(str(datetime.now())[:10])
-    d_clicked = valid_count + invalid_count 
+    d_clicked = valid_count + invalid_count
     text = f'{await_count} awaiting now'
     await bot.send_message(message.chat.id, text)
 
@@ -117,7 +123,7 @@ async def now_handler(message: Message, command: CommandObject):
 #     await asyncio.sleep(1)
 #     print('exec')
 #     # os.execv(sys.executable, ['python'] + sys.argv)
-     
+
 @dp.inline_query()
 async def inline_handler(inline_query: InlineQuery):
     token = await get_stk_token()
@@ -137,6 +143,6 @@ if __name__ == "__main__":
     print('\n')
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)
     asyncio.run(main())
-    
+
 
 

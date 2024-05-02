@@ -13,7 +13,7 @@ from dotenv import find_dotenv, load_dotenv
 from stk_parser import get_detections, get_stk_token
 
 load_dotenv(find_dotenv(), verbose=True)
-BOT_TOKEN :str = os.environ.get('1BOT_TOKEN','ERR')
+BOT_TOKEN :str = os.environ.get('BOT_TOKEN','ERR')
 if BOT_TOKEN == 'ERR':
     print('cant get bot token from dotenv')
     print(f'token: {BOT_TOKEN}')

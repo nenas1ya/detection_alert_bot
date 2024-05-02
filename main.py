@@ -109,6 +109,6 @@ async def inline_handler(inline_query: InlineQuery):
 
 
 if __name__ == "__main__":
-    print(f'wrong token:{BOT_TOKEN} 'if BOT_TOKEN == 'ERR' else f'started at {datetime.now(tz=timezone(timedelta(hours=5))).strftime("%H:%M:%S")}')
+    print(f'cant get token:{BOT_TOKEN} 'if BOT_TOKEN == 'ERR' else f' {datetime.now(tz=timezone(timedelta(hours=5))).strftime("%H:%M:%S")}')
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)
     asyncio.run(main())

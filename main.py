@@ -15,9 +15,11 @@ from stk_parser import get_detections, get_stk_token
 load_dotenv(find_dotenv(), verbose=True)
 BOT_TOKEN :str = os.environ.get('1BOT_TOKEN','ERR')
 if BOT_TOKEN == 'ERR':
-    print(find_dotenv())
-    print(load_dotenv())
-
+    print('cant get bot token from dotenv')
+    print(f'token: {BOT_TOKEN}')
+    print(f'find_dotenv: {find_dotenv()}')
+    print(f'load_dotenv: {load_dotenv()}')
+    sys.exit()
 else:
     print({datetime.now(tz=timezone(timedelta(hours=5))).strftime("%H:%M:%S")})
     dp = Dispatcher()

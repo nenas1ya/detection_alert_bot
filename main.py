@@ -13,7 +13,8 @@ from dotenv import find_dotenv, load_dotenv
 from stk_parser import get_detections, get_stk_token
 
 load_dotenv(find_dotenv(), verbose=True)
-BOT_TOKEN :str = os.environ.get('BOT_TOKEN', 'ERR')
+BOT_TOKEN :str = os.environ.get('1BOT_TOKEN','err')
+print(f'cant get token from env:{str(find_dotenv())} 'if BOT_TOKEN == 'ERR' else f' {datetime.now(tz=timezone(timedelta(hours=5))).strftime("%H:%M:%S")}')
 
 dp = Dispatcher()
 bot = Bot(BOT_TOKEN)

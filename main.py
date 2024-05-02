@@ -1,7 +1,6 @@
-
-
 import asyncio
 from datetime import datetime
+
 from classes import Parser
 
 p = Parser()
@@ -12,5 +11,5 @@ async def main():
 
 
 if __name__ == '__main__':
-    print(f'{datetime.now().strftime("%X.%f")[:-3]} | SYS | start from beta main.py')
+    print( f'{datetime.now().strftime("%X.%f")[:-3]} | SYS | start from beta main.py')
     asyncio.run(main())

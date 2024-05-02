@@ -1,6 +1,8 @@
 import os
 import asyncio
+import sys
 import aiogram
+import logging
 
 from dataclasses import dataclass
 from json import loads
@@ -14,12 +16,12 @@ from aiogram.types import Message, InlineQuery, InlineQueryResultArticle,InputTe
 
 
 load_dotenv(
-    find_dotenv('.envb', raise_error_if_not_found=True),
+    find_dotenv('.env', raise_error_if_not_found=True),
     verbose=True)
 
 @dataclass
 class Parser():
-    
+
     login: str = os.environ.get('STK_LOGIN', '')
     passw: str = os.environ.get('STK_PASSWORD', '')
     d_url = 'http://fku-ural.stk-drive.ru/api/detections/'
@@ -49,7 +51,7 @@ class Parser():
                                     f'creds    | {self.login}:{self.passw}\n'
                                     f'response | {await response.text()}')
 
-    
+
     async def get_all_detections(
             self,
             token: str,
@@ -81,12 +83,12 @@ class Parser():
 class TelegramBot():
     def __init__(self) -> None:
         pass
-        
+
     async def connect(self):
         BOT_TOKEN = os.environ.get('BOT_TOKEN', '')
         print(len(BOT_TOKEN))
         bot = aiogram.Bot(BOT_TOKEN)
-          
+
     async def create_dispatcher(self):
         pass
     async def start_handler(self):
@@ -104,9 +106,13 @@ async def main():
     detections = await p.get_all_detections(token=token)
     print(len(detections))
 
-    
+
 
 if __name__ == '__main__':
+    print(sys.argv)
+    logging.basicConfig(
+        level=(logging.DEBUG if sys.argv[0]=='d' else logging.INFO)
+    )
     print(f'{datetime.now().strftime("%X.%f")[:-3]} | SYS | start from clasess.py')
     asyncio.run(main())
 

@@ -13,7 +13,7 @@ from dotenv import find_dotenv, load_dotenv
 from stk_parser import get_detections, get_stk_token
 
 load_dotenv(find_dotenv(), verbose=True)
-BOT_TOKEN :str = os.environ.get('TEST_TOKEN', '')
+BOT_TOKEN :str = os.environ.get('BOT_TOKEN', 'ERR')
 
 dp = Dispatcher()
 bot = Bot(BOT_TOKEN)
@@ -32,7 +32,7 @@ async def start_handler(message: Message) -> None:
 
 @dp.message(Command(
         'on',
-        prefix='/!.'))
+        prefix='\\/!.'))
 async def on_handler(message: Message, command: CommandObject) -> None:
     '''contious checking detections and inform in telegram
 
@@ -109,6 +109,6 @@ async def inline_handler(inline_query: InlineQuery):
 
 
 if __name__ == "__main__":
-    print('\n')
+    print(f'wrong token:{BOT_TOKEN} 'if BOT_TOKEN == 'ERR' else f'started at {datetime.now(tz=timezone(timedelta(hours=5))).strftime("%H:%M:%S")}')
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)
     asyncio.run(main())

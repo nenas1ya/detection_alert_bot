@@ -21,7 +21,6 @@ if BOT_TOKEN == 'ERR':
     print(f'load_dotenv: {load_dotenv()}')
     sys.exit()
 else:
-    print({datetime.now(tz=timezone(timedelta(hours=5))).strftime("%H:%M:%S")})
     dp = Dispatcher()
     bot = Bot(BOT_TOKEN)
 

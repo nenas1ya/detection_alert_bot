@@ -163,11 +163,7 @@ async def inline_handler(inline_query: InlineQuery):
 
 
 if __name__ == "__main__":
-    print(
-        f"cant get token:{BOT_TOKEN} "
-        if BOT_TOKEN == "ERR"
-        else f' {datetime.now(tz=timezone(timedelta(hours=5))).strftime("%H:%M:%S")}'
-    )
+    print(f'{datetime.now(tz=timezone(timedelta(hours=5))).strftime("%H:%M:%S")}')
 
     handled: list[int] = []
 

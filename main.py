@@ -27,7 +27,7 @@ from classes import Parser
 
 
 async def main(*args):
-
+    p = Parser('','')
     token = await p.get_token()
     d = await p.get_all_detections(token=token)
     print(len(d))

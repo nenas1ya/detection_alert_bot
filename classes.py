@@ -1,20 +1,24 @@
-import os
 import asyncio
+import os
 import sys
 import aiogram
 import logging
 
 from dataclasses import dataclass
-from json import loads
-from dotenv import find_dotenv, load_dotenv
 from datetime import datetime
-from aiohttp import ClientSession as http
+from json import loads
 
+import aiogram
 from aiogram import Bot, Dispatcher, F
-from aiogram.filters import CommandStart, Command, CommandObject
-from aiogram.types import Message, InlineQuery, InlineQueryResultArticle,InputTextMessageContent
+from aiogram.filters import Command, CommandObject, CommandStart
+from aiogram.types import (InlineQuery, InlineQueryResultArticle,
+                           InputTextMessageContent, Message)
+from aiohttp import ClientSession as http
+from dotenv import find_dotenv, load_dotenv
 
-
+load_dotenv(
+    find_dotenv('.envb', raise_error_if_not_found=True),
+    verbose=True)
 
 @dataclass
 class Parser():

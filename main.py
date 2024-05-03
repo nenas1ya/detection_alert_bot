@@ -9,34 +9,7 @@ from dotenv import find_dotenv, load_dotenv
 from classes import Parser
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-async def main(*args):
-    p = Parser('','')
-    token = await p.get_token()
-    d = await p.get_all_detections(token=token)
-    print(len(d))
-
-
-if __name__ == '__main__':
-    bot_token = os.environ.get('TEST_TOKEN', '0')
-    stk_login: str = os.environ.get('STK_LOGIN', '')
-    stk_passw: str = os.environ.get('STK_PASSWORD', '')
+async def main():
 
     print( f'{datetime.now().strftime("%X.%f")[:-3]} | SYS | start from beta main.py')
 
@@ -64,6 +37,11 @@ if __name__ == '__main__':
 
     print(logger.level)
     print(f'{os.path.basename(__file__)}')
-    asyncio.run(main(
-        bot_token, stk_login, stk_passw
-    ))
+
+
+if __name__ == '__main__':
+
+
+
+
+    asyncio.run(main())

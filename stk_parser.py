@@ -11,7 +11,7 @@ STK_LOGIN = os.environ.get('STK_LOGIN')
 STK_PASSWORD = os.environ.get('STK_PASSWORD')
 PREMOD_URL = 'http://fku-ural.stk-drive.ru/api/detections/'
 
-async def get_stk_token():
+async def get_stk_token() -> str:
 
     '''get token from stk api
 

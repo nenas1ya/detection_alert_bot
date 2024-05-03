@@ -1,3 +1,7 @@
+#
+#   save as .env
+#
+
 STK_LOGIN=''
 STK_PASSWORD =''
 BOT_TOKEN=''

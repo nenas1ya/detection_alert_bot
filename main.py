@@ -1,27 +1,26 @@
-import argparse
 import asyncio
 import logging
 import os
 from datetime import datetime
 
-from dotenv import find_dotenv, load_dotenv
-
-from classes import CMDLineArguments, DetectionsParser, TelegramBot
+from classes import CMDLineArguments, DetectionsParser, EnvLoader, TelegramBot
 
 
 async def main():
-    # load_dotenv(find_dotenv(raise_error_if_not_found=True), verbose=True)
 
     p = CMDLineArguments()
     options = p.parse_args()
-
-    # logging
-    logger = logging.getLogger(__name__)
-    logger.setLevel(options.log_level)
-    print(options)
-    print(logger.level)
-    print(f"{os.path.basename(__file__)}")
+    env = EnvLoader()
+    if options.dev:
+        bot_token = env.get_bot_dev()
+    else:
+        bot_token = env.get_bot()
+    if options.dutssd:
+        dutssd = env.get_dutssd()
+    else:
+        stk = env.get_stk()
 
 
 if __name__ == "__main__":
+    logging.debug("Run asyncio")
     asyncio.run(main())

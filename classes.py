@@ -22,7 +22,7 @@ from dotenv import find_dotenv, load_dotenv
 
 logging.basicConfig(
     level=logging.DEBUG,
-    format="{asctime}.{msecs:0<3.0f}   | {levelname:6} | {funcName:^14} > {message}",
+    format="{asctime}.{msecs:0<3.0f} | {levelname:^6} | {funcName:^14} > {message}",
     style="{",
     datefmt="%m-%d %H:%M:%S",
 )
@@ -102,7 +102,7 @@ class CMDLineArguments(argparse.ArgumentParser):
         self.add_argument(
             "--dutssd", help="Fetch dutssd instead stk", action="store_true"
         )
-        logging.debug("Cmd argument parser")
+        logging.info("Create cmd argument parser")
 
 
 class EnvLoader:
@@ -141,9 +141,8 @@ class EnvLoader:
 
     def get_bot_dev(self):
 
-
         if os.environ.get("DEV_TOKEN"):
-            logging.info("Get DEV_TOKEN token")
+            logging.info("Get DEV_TOKEN")
             return {"DEV_TOKEN": os.environ.get("DEV_TOKEN")}
         else:
             logging.error(f"Cant load DEV_TOKEN env variables")
@@ -152,8 +151,17 @@ class EnvLoader:
     def get_bot(self):
 
         if os.environ.get("BOT_TOKEN"):
-            logging.info("Get BOT_TOKEN token")
+            logging.info("Get BOT_TOKEN")
             return {"BOT_TOKEN": os.environ.get("BOT_TOKEN")}
         else:
             logging.error(f"Cant load BOT_TOKEN env variables")
             raise Exception("Value BOT_TOKEN is None")
+
+    def get_all(self):
+        logging.info("Get [stk dutssd bot bot_dev] env variabless ")
+        return {
+            "stk": self.get_stk(),
+            "dutssd": self.get_dutssd(),
+            "bot": self.get_bot(),
+            "bot_dev": self.get_bot_dev(),
+        }

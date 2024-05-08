@@ -3,22 +3,13 @@ import asyncio
 import logging
 import os
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from json import loads
 
-import aiogram
-from aiogram import Bot, Dispatcher, F
-from aiogram.filters import Command, CommandObject, CommandStart
-from aiogram.types import (
-    InlineQuery,
-    InlineQueryResultArticle,
-    InputTextMessageContent,
-    Message,
-)
+
 from aiohttp import ClientSession as http
 from dotenv import find_dotenv, load_dotenv
-
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -64,7 +55,7 @@ class DetectionsParser:
             async with session.get(
                 url=f"{self.detections_url}?"
                 f"validation_status={status}&"
-                + f"created_at__gte={created_gte}T00:00:00.000Z",
+                f"created_at__gte={created_gte}T00:00:00.000Z",
                 headers={"Authorization": f"Bearer {token}"},
             ) as response:
                 if response.status == 200:
@@ -75,20 +66,6 @@ class DetectionsParser:
                         f"Bad request:\n{response.status}:{await response.text()}"
                     )
                     raise Exception("Bad request")
-
-
-class TelegramBot:
-    def __init__(self) -> None:
-        pass
-
-    async def connect(self):
-        pass
-
-    async def create_dispatcher(self):
-        pass
-
-    async def start_handler(self):
-        pass
 
 
 class CMDLineArguments(argparse.ArgumentParser):
@@ -139,20 +116,20 @@ class EnvLoader:
             logging.error(f"Cant load DUTSSD env variables")
             raise Exception("Value DUTSSD_LOGIN, DUTSSD_PASSWORD is None")
 
-    def get_bot_dev(self):
+    def get_bot_dev(self) -> str:
 
         if os.environ.get("DEV_TOKEN"):
             logging.info("Get DEV_TOKEN")
-            return {"DEV_TOKEN": os.environ.get("DEV_TOKEN")}
+            return os.environ.get("DEV_TOKEN")  # type: ignore
         else:
             logging.error(f"Cant load DEV_TOKEN env variables")
             raise Exception("Value DEV_TOKEN is None")
 
-    def get_bot(self):
+    def get_bot(self) -> str:
 
         if os.environ.get("BOT_TOKEN"):
             logging.info("Get BOT_TOKEN")
-            return {"BOT_TOKEN": os.environ.get("BOT_TOKEN")}
+            return os.environ.get("BOT_TOKEN") # type: ignore
         else:
             logging.error(f"Cant load BOT_TOKEN env variables")
             raise Exception("Value BOT_TOKEN is None")

@@ -4,7 +4,8 @@ import os
 from datetime import datetime
 from pprint import pprint
 
-from classes import CMDLineArguments, DetectionsParser, EnvLoader, TelegramBot
+from utils import CMDLineArguments, DetectionsParser, EnvLoader
+
 
 
 async def main():
@@ -12,8 +13,6 @@ async def main():
     p = CMDLineArguments()
     options = p.parse_args()
     env = EnvLoader()
-    x = env.get_all()
-    pprint(x)
 
 
 if __name__ == "__main__":

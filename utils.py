@@ -27,7 +27,7 @@ class DetectionsParser:
     base_url: str = (
         "fku-ural.stk-drive.ru"  # dutssd.admtyumen.ru | fku-ural.stk-drive.ru
     )
-    detections_url = f"http://{base_url}api/detections/"
+    detections_url = f"http://{base_url}/api/detections/"
     token_url = f"http://{base_url}/api/users/token/"
 
     async def get_token(self, stk_login: str = "") -> str:
@@ -37,8 +37,9 @@ class DetectionsParser:
                 data={"username": self.login, "password": self.passw},
             ) as response:
                 if response.status == 200:
+                    t = await response.text()
                     logging.debug(f"Recieved api token")
-                    return loads(str(await response.text())).get("access")
+                    return loads(str(t)).get("access")
                 else:
                     logging.error(
                         f"Bad request:\n{response.status}:{await response.text()}"
@@ -59,8 +60,9 @@ class DetectionsParser:
                 headers={"Authorization": f"Bearer {token}"},
             ) as response:
                 if response.status == 200:
+                    t = await response.text()
                     logging.debug(f"Recieved {status} from {created_gte} detections")
-                    return loads(str(await response.text()))
+                    return loads(str(t))
                 else:
                     logging.error(
                         f"Bad request:\n{response.status}:{await response.text()}"

@@ -30,21 +30,30 @@ class DetectionsParser:
     detections_url = f"http://{base_url}/api/detections/"
     token_url = f"http://{base_url}/api/users/token/"
 
-    async def get_token(self, stk_login: str = "") -> str:
-        async with http(trust_env=True) as session:
-            async with session.post(
-                url=self.token_url,
-                data={"username": self.login, "password": self.passw},
-            ) as response:
-                if response.status == 200:
-                    t = await response.text()
-                    logging.debug(f"Recieved api token")
-                    return loads(str(t)).get("access")
-                else:
-                    logging.error(
-                        f"Bad request:\n{response.status}:{await response.text()}"
-                    )
-                    raise Exception("Bad request")
+    async def get_token(self) -> str:
+        try:
+            async with http(trust_env=True) as session:
+                async with session.post(
+                    url=self.token_url,
+                    data={"username": self.login, "password": self.passw},
+                ) as response:
+                    r_data: dict = loads(str(await response.text()))
+
+                    if response.status == 200:
+                        logging.debug(f"Recieved 200")
+                    else:
+                        raise RuntimeError(
+                            f"Bad request [{response.status}] : {r_data}"
+                        )
+
+                    if r_data["access"]:
+                        return r_data["access"]
+                    else:
+                        raise ValueError(f"Empty response: {r_data}")
+
+        except Exception as e:
+            logging.error(e)
+            raise
 
     async def get_all_detections(
         self,
@@ -52,22 +61,32 @@ class DetectionsParser:
         status: str = "AWAITING_VALIDATION",
         created_gte: str = "2024-04-01",
     ) -> list[dict]:
-        async with http(trust_env=True) as session:
-            async with session.get(
-                url=f"{self.detections_url}?"
-                f"validation_status={status}&"
-                f"created_at__gte={created_gte}T00:00:00.000Z",
-                headers={"Authorization": f"Bearer {token}"},
-            ) as response:
-                if response.status == 200:
-                    t = await response.text()
-                    logging.debug(f"Recieved {status} from {created_gte} detections")
-                    return loads(str(t))
-                else:
-                    logging.error(
-                        f"Bad request:\n{response.status}:{await response.text()}"
-                    )
-                    raise Exception("Bad request")
+        try:
+            async with http(trust_env=True) as session:
+                async with session.get(
+                    url=f"{self.detections_url}?"
+                    f"validation_status={status}&"
+                    f"created_at__gte={created_gte}T00:00:00.000Z",
+                    headers={"Authorization": f"Bearer {token}"},
+                ) as response:
+                    r_data: dict = loads(str(await response.text()))
+
+                    if response.status == 200:
+                        logging.debug(f"Recieved 200")
+                    else:
+                        raise RuntimeError(
+                            f"Bad request [{response.status}] : {r_data}"
+                        )
+
+                    t = r_data.keys()
+                    if t:
+                        return t
+                    else:
+                        raise ValueError(f"Empty response: {r_data}")
+
+        except Exception as e:
+            logging.error(e)
+            raise
 
 
 class CMDLineArguments(argparse.ArgumentParser):
@@ -94,7 +113,7 @@ class EnvLoader:
             logging.error(f"Cant load dotenv: {e}")
             raise e.with_traceback(None)
 
-    def get_stk(self):
+    def get_stk(self) -> dict[str, str]:
 
         if os.environ.get("STK_LOGIN") and os.environ.get("STK_PASSWORD"):
             logging.info("Get STK env variables")
@@ -106,7 +125,7 @@ class EnvLoader:
             logging.error(f"Cant load STK env variables")
             raise Exception("Value STK_LOGIN, STK_PASSWORD is None")
 
-    def get_dutssd(self):
+    def get_dutssd(self) -> dict[str, str]:
 
         if os.environ.get("DUTSSD_LOGIN") and os.environ.get("DUTSSD_PASSWORD"):
             logging.info("Get DUTSSD env variables")
@@ -131,7 +150,7 @@ class EnvLoader:
 
         if os.environ.get("BOT_TOKEN"):
             logging.info("Get BOT_TOKEN")
-            return os.environ.get("BOT_TOKEN") # type: ignore
+            return os.environ.get("BOT_TOKEN")  # type: ignore
         else:
             logging.error(f"Cant load BOT_TOKEN env variables")
             raise Exception("Value BOT_TOKEN is None")

@@ -1,26 +1,38 @@
-import asyncio
 import logging
-from dataclasses import dataclass, field
-import os
-
-import asyncio
-import logging
-from dataclasses import dataclass, field
-from os import getenv
-from typing import Any
-
-from aiogram import Bot, Dispatcher, F, Router, html
+from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
-from aiogram.fsm.context import FSMContext
-from aiogram.fsm.scene import Scene, SceneRegistry, ScenesManager, on
-from aiogram.fsm.storage.memory import SimpleEventIsolation
-from aiogram.types import KeyboardButton, Message, ReplyKeyboardRemove
-from aiogram.utils.formatting import (
-    Bold,
-    as_key_value,
-    as_list,
-    as_numbered_list,
-    as_section,
-)
-from aiogram.utils.keyboard import ReplyKeyboardBuilder
+from aiogram.types import Message
 
+logging.basicConfig(level=logging.DEBUG)
+
+
+class TelegramBot:
+    def __init__(self, bot_token):
+        self.bot_token = bot_token
+        self.bot = Bot(token=bot_token)
+        self.dp = Dispatcher()
+        self.detections = []
+
+    async def start(self):
+        self.dp.message(Command("start"))(self.send_welcome)
+        self.dp.message(Command("detections"))(self.send_detections)
+        await self.dp.start_polling(self.bot)
+
+    async def send_welcome(self, message: Message):
+        await message.answer("Hello! I will notify you about detections.")
+
+    async def send_detections(self, message: Message):
+        if self.detections:
+            detection_messages = "\n".join(
+                [
+                    f"Detection ID: {d['id']} - Status: {d['validation_status']}"
+                    for d in self.detections
+                ]
+            )
+            await message.answer(f"Detections:\n{detection_messages}")
+        else:
+            await message.answer("No detections found.")
+
+    async def update_detections(self, detections):
+        self.detections = detections
+        # Additional logic to send notifications about new detections can be added here

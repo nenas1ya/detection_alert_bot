@@ -1,28 +1,46 @@
 import asyncio
 import logging
-import os
-from datetime import datetime
-from pprint import pprint
+from utils import CMDLineArguments, get_envs, DetectionsParser
+from bot import TelegramBot
 
-from utils import CMDLineArguments, DetectionsParser, get_envs
+
+async def check_detections_periodically(bot, parser, interval=60):
+    """
+    Periodically check for new detections and update the bot.
+    """
+    while True:
+        try:
+            token = await parser.get_token()
+            detections = await parser.get_detects(token)
+            await bot.update_detections(detections)
+            logging.info("Updated detections.")
+        except Exception as e:
+            logging.error("Failed to update detections: %s", e)
+        await asyncio.sleep(interval)  # Adjust the interval as needed
 
 
 async def main():
-
+    logging.basicConfig(level=logging.DEBUG)
     p = CMDLineArguments()
     options = p.parse_args()
 
-    get_envs(
-        "STK_PASSWORD",
-        223,
+    env_vars = get_envs(
         "STK_LOGIN",
-        "STK_PASSWROD",
+        "STK_PASSWORD",
         "DUTSSD_LOGIN",
         "DUTSSD_PASSWORD",
         "DEV_TOKEN",
-        3,
         "BOT_TOKEN",
     )
+
+    parser = DetectionsParser(
+        login=env_vars["STK_LOGIN"], passw=env_vars["STK_PASSWORD"]
+    )
+
+    bot = TelegramBot(env_vars["BOT_TOKEN"])
+
+    # Start the bot and the periodic check concurrently
+    await asyncio.gather(bot.start(), check_detections_periodically(bot, parser))
 
 
 if __name__ == "__main__":

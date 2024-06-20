@@ -1,22 +1,113 @@
 import asyncio
 import logging
-from utils import CMDLineArguments, get_envs, DetectionsParser
+from async_timeout import timeout
+from abc import ABC, abstractmethod
+
+from utils import get_envs, DetectionsParser
 from bot import TelegramBot
 
-logging.basicConfig(level=logging.DEBUG)
+class AbstractMainApp(ABC):
+    """
+    Abstract base class for the main application.
+    """
+
+    def __init__(self):
+        self.env_vars = None
+        self.parser = None
+        self.bot = None
+        self.token = None
+        self.token_expiration = None
+
+    @abstractmethod
+    async def fetch_token(self):
+        """
+        Abstract method to fetch token, should be implemented in subclass.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    async def check_detections_periodically(self):
+        """
+        Abstract method to periodically check detections, should be implemented in subclass.
+        """
+        pass
+
+    async def initialize(self):
+        """
+        Initialize environment variables, parser, bot, etc.
+        """
+        self.env_vars = self.load_env_vars()
+        self.parser = self.create_parser()
+        self.bot = self.create_bot()
+
+    def load_env_vars(self):
+        """
+        Load environment variables.
+        """
+
+        self.env_vars = get_envs(
+            "STK_LOGIN",
+            "STK_PASSWORD",
+            "DUTSSD_LOGIN",
+            "DUTSSD_PASSWORD",
+            "DEV_TOKEN",
+            "BOT_TOKEN",
+        )
+        return {
+            "STK_LOGIN": "your_stk_login",
+            "STK_PASSWORD": "your_stk_password",
+            "DUTSSD_LOGIN": "your_dutssd_login",
+            "DUTSSD_PASSWORD": "your_dutssd_password",
+            "DEV_TOKEN": "your_dev_token",
+            "BOT_TOKEN": "your_bot_token",
+        }  # Replace with your actual environment variables
+
+    def create_parser(self):
+        """
+        Create and return an instance of DetectionsParser.
+        """
+        return DetectionsParser(
+            login=self.env_vars["STK_LOGIN"], passw=self.env_vars["STK_PASSWORD"]
+        )
+
+    def create_bot(self):
+        """
+        Create and return an instance of TelegramBot.
+        """
+        return TelegramBot(self.env_vars["DEV_TOKEN"])
+
+    async def start(self):
+        """
+        Start the main application.
+        """
+        await self.initialize()
+        await asyncio.gather(self.check_detections_periodically(), self.bot.start())
 
 
-class MainApp:
+class MainApp(AbstractMainApp):
     """
     Main application class to handle the periodic checking of detections
     and interfacing with the Telegram bot.
     """
 
-    def __init__(self):
-        self.env_vars = None
-        self.detections = []
-        self.bot = None
-        self.parser = None
+    async def fetch_token(self):
+        """
+        Fetches the token and renews when expired.
+        """
+        if (
+            self.token_expiration is None
+            or self.token_expiration < asyncio.get_event_loop().time()
+        ):
+            try:
+                with timeout(10):
+                    self.token = await self.parser.get_token()
+                    self.token_expiration = (
+                        asyncio.get_event_loop().time() + 3600
+                    )  # token lifetime 1 hour
+            except asyncio.TimeoutError:
+                logging.error("Timeout fetching token")
+            except Exception as e:
+                logging.error("Error fetching token: %s", e)
 
     async def check_detections_periodically(self):
         """
@@ -28,8 +119,8 @@ class MainApp:
 
         while True:
             try:
-                token = await self.parser.get_token()
-                new_detections = await self.parser.get_detects(token)
+                await self.fetch_token()
+                new_detections = await self.parser.get_detects(self.token)
                 detection_count = len(new_detections)
                 chats = self.bot.get_active_chats()
 
@@ -65,35 +156,8 @@ class MainApp:
                 self.bot.get_timeout()
             )  # Adjust the interval dynamically based on settings
 
-    async def main(self):
-        """
-        Main method to initialize environment variables, parser, and bot,
-        and start the periodic detection check and bot polling.
-
-        :return: None
-        """
-        p = CMDLineArguments()
-        options = p.parse_args()
-
-        self.env_vars = get_envs(
-            "STK_LOGIN",
-            "STK_PASSWORD",
-            "DUTSSD_LOGIN",
-            "DUTSSD_PASSWORD",
-            "DEV_TOKEN",
-            "BOT_TOKEN",
-        )
-
-        self.parser = DetectionsParser(
-            login=self.env_vars["STK_LOGIN"], passw=self.env_vars["STK_PASSWORD"]
-        )
-
-        self.bot = TelegramBot(self.env_vars["DEV_TOKEN"])
-
-        await asyncio.gather(self.check_detections_periodically(), self.bot.start())
-
 
 if __name__ == "__main__":
-    logging.info("Run asyncio from main")
+    logging.info("Running asyncio from main")
     app = MainApp()
-    asyncio.run(app.main())
+    asyncio.run(app.start())

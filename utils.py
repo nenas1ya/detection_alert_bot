@@ -16,10 +16,6 @@ logging.basicConfig(
 
 @dataclass
 class DetectionsParser:
-    """
-    A class to handle API interactions for fetching tokens and detections.
-    """
-
     login: str
     passw: str
     base_url: str = "fku-ural.stk-drive.ru"
@@ -27,11 +23,6 @@ class DetectionsParser:
     token_url: str = f"http://{base_url}/api/users/token/"
 
     async def get_token(self) -> str:
-        """
-        Fetch an authentication token from the API.
-        Returns:
-            str: The authentication token.
-        """
         async with ClientSession(trust_env=True) as session:
             async with session.post(
                 url=self.token_url,
@@ -50,15 +41,6 @@ class DetectionsParser:
         status: str = "AWAITING_VALIDATION",
         created_gte: str = "2024-04-01",
     ) -> list[dict]:
-        """
-        Fetch detections from the API.
-        Args:
-            token (str): The authentication token.
-            status (str): The status of the detections to fetch.
-            created_gte (str): The start date for fetching detections.
-        Returns:
-            list[dict]: A list of detections.
-        """
         async with ClientSession(trust_env=True) as session:
             async with session.get(
                 url=f"{self.detections_url}?validation_status={status}&created_at__gte={created_gte}T00:00:00.000Z",
@@ -69,14 +51,10 @@ class DetectionsParser:
                     logging.debug("Received 200 response")
                     return r_data
                 logging.error("Failed to get detections: %s", r_data)
-                raise RuntimeError(f"Failed to get detections: {r_data}")
+                raise RuntimeError(f"Failed to get detections: %r_data")
 
 
 class CMDLineArguments(argparse.ArgumentParser):
-    """
-    A class to handle command-line arguments.
-    """
-
     def __init__(self) -> None:
         super().__init__()
         self.add_argument(
@@ -88,13 +66,6 @@ class CMDLineArguments(argparse.ArgumentParser):
 
 
 def get_envs(*envs: str) -> dict:
-    """
-    Load environment variables from a .env file.
-    Args:
-        envs (str): A list of environment variable names to load.
-    Returns:
-        dict: A dictionary of environment variables and their values.
-    """
     load_dotenv(find_dotenv(raise_error_if_not_found=True), verbose=True)
     env_vars = {v: os.environ[v] for v in envs if os.environ.get(v)}
     if len(env_vars) != len(envs):

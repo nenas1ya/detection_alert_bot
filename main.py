@@ -54,11 +54,10 @@ class MainApp:
                 new_detections = await self.parser.get_detects(token)
                 detection_count = len(new_detections)
                 chats = self.bot.get_active_chats()
-
+                print(chats, detection_count)
                 for chat_id in chats:
                     if detection_count == 0:
-                        if previous_detection_count.get(chat_id, 0) > 0:
-                            if pinned_message_id.get(chat_id):
+                        if previous_detection_count.get(chat_id, 0) > 0 and pinned_message_id.get(chat_id):
                                 await self.bot.send_end_of_day_message(chat_id)
                                 await self.bot.unpin_message(
                                     chat_id, pinned_message_id[chat_id]
@@ -94,8 +93,6 @@ class MainApp:
 
         :return: None
         """
-        p = CMDLineArguments()
-
         self.env_vars = get_envs(
             "STK_LOGIN",
             "STK_PASSWORD",

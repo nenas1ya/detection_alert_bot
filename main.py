@@ -50,8 +50,8 @@ class MainApp:
 
         while True:
             try:
-                await self.fetch_token()
-                new_detections = await self.parser.get_detects(self.token)
+                token = await self.parser.get_token()
+                new_detections = await self.parser.get_detects(token)
                 detection_count = len(new_detections)
                 chats = self.bot.get_active_chats()
 

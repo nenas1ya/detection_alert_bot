@@ -1,6 +1,7 @@
 import asyncio
-from async_timeout import timeout
 import logging
+from datetime import datetime
+from async_timeout import timeout
 from utils import CMDLineArguments, get_envs, DetectionsParser
 from bot import TelegramBot
 
@@ -30,7 +31,7 @@ class MainApp:
             or self.token_expiration < asyncio.get_event_loop().time()
         ):
             try:
-                with timeout(10):
+                async with timeout(10):
                     self.token = await self.parser.get_token()
                     self.token_expiration = (
                         asyncio.get_event_loop().time() + 3600
@@ -45,27 +46,27 @@ class MainApp:
         Periodically checks for detections and updates the Telegram bot
         with the current detection count.
         """
-        previous_detection_count = {}
+        previous_detection_count = 0
         pinned_message_id = {}
 
         while True:
             try:
-                token = await self.parser.get_token()
-                new_detections = await self.parser.get_detects(token)
+                await self.fetch_token()
+                new_detections = await self.parser.get_detects(self.token)
                 detection_count = len(new_detections)
                 chats = self.bot.get_active_chats()
-                print(chats, detection_count)
+                print(chats,previous_detection_count,pinned_message_id)
                 for chat_id in chats:
                     if detection_count == 0:
-                        if previous_detection_count.get(chat_id, 0) > 0 and pinned_message_id.get(chat_id):
-                                await self.bot.send_end_of_day_message(chat_id)
-                                await self.bot.unpin_message(
-                                    chat_id, pinned_message_id[chat_id]
-                                )
-                                pinned_message_id[chat_id] = None
-                        previous_detection_count[chat_id] = 0
+                        if previous_detection_count > 0 and pinned_message_id.get(chat_id):
+                            await self.bot.send_end_of_day_message(chat_id)
+                            await self.bot.unpin_message(
+                                chat_id, pinned_message_id[chat_id]
+                            )
+                            pinned_message_id[chat_id] = None
+                        previous_detection_count = 0
                     else:
-                        if previous_detection_count.get(chat_id, 0) == 0:
+                        if previous_detection_count == 0:
                             message_id = await self.bot.send_detection_message(
                                 chat_id, detection_count
                             )
@@ -76,12 +77,16 @@ class MainApp:
                             await self.bot.edit_detection_message(
                                 chat_id, pinned_message_id[chat_id], detection_count
                             )
-                        previous_detection_count[chat_id] = detection_count
+                        previous_detection_count = detection_count
 
                 await self.bot.update_detections(new_detections)
                 self.detections = new_detections
             except Exception as e:
                 logging.error("Failed to update detections: %s", e)
+            print(self.bot.get_timeout())
+            print(datetime.now())
+            
+            
             await asyncio.sleep(
                 self.bot.get_timeout()
             )  # Adjust the interval dynamically based on settings

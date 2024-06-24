@@ -2,44 +2,26 @@ import asyncio
 import logging
 from datetime import datetime
 from async_timeout import timeout
-from utils import CMDLineArguments, get_envs, DetectionsParser
+from utils import DetectionsParser, Config, get_envs, setup_logging
 from bot import TelegramBot
 
-logging.basicConfig(level=logging.DEBUG)
 
-
-class MainApp:
+class MainApp(Config):
     """
     Main application class to handle the periodic checking of detections
     and interfacing with the Telegram bot.
     """
 
-    def __init__(self):
-        self.env_vars = None
-        self.detections = []
-        self.bot = None
-        self.parser = None
-        self.token = None
-        self.token_expiration = None
+    def __init__(self, config=None):
 
-    async def fetch_token(self):
-        """
-        Get token and renew when expired
-        """
-        if (
-            self.token_expiration is None
-            or self.token_expiration < asyncio.get_event_loop().time()
-        ):
-            try:
-                async with timeout(10):
-                    self.token = await self.parser.get_token()
-                    self.token_expiration = (
-                        asyncio.get_event_loop().time() + 3600
-                    )  # life time of token 1h
-            except asyncio.TimeoutError:
-                logging.error("Timeout fetching token")
-            except Exception as e:
-                logging.error("Error fetching token%s", e)
+        super().__init__(config)
+        self.config = {**self.config}
+
+        self.detections = []
+        self.parser = DetectionsParser(self.config["Parser"])
+
+        self.bot = TelegramBot(self.config["Tg"]['token'])
+
 
     async def check_detections_periodically(self):
         """
@@ -52,13 +34,31 @@ class MainApp:
         while True:
             try:
                 await self.fetch_token()
-                new_detections = await self.parser.get_detects(self.token)
-                detection_count = len(new_detections)
-                chats = self.bot.get_active_chats()
-                print(chats,previous_detection_count,pinned_message_id)
+
+                awaiting_detections = await self.parser.get_detects(
+                    self.token,
+                    status="AWAITING_VALIDATION",
+                )
+                invalid_detections = await self.parser.get_detects(
+                    self.token,
+                    status="INVALID_DETECTION",
+                    created_gte=datetime.now().date(),
+                )
+                valid_detections = await self.parser.get_detects(
+                    self.token,
+                    status="VALID_DETECTION",
+                    created_gte=datetime.now().date(),
+                )
+
+                aw_detection_count = len(awaiting_detections)
+                inv_detection_count = len(invalid_detections)
+                val_detection_count = len(valid_detections)
+                chats = list(self.bot.chat_settings.keys())
                 for chat_id in chats:
-                    if detection_count == 0:
-                        if previous_detection_count > 0 and pinned_message_id.get(chat_id):
+                    if aw_detection_count == 0:
+                        if previous_detection_count > 0 and pinned_message_id.get(
+                            chat_id
+                        ):
                             await self.bot.send_end_of_day_message(chat_id)
                             await self.bot.unpin_message(
                                 chat_id, pinned_message_id[chat_id]
@@ -68,28 +68,24 @@ class MainApp:
                     else:
                         if previous_detection_count == 0:
                             message_id = await self.bot.send_detection_message(
-                                chat_id, detection_count
+                                chat_id, aw_detection_count
                             )
                             pinned_message_id[chat_id] = await self.bot.pin_message(
                                 chat_id, message_id
                             )
                         else:
                             await self.bot.edit_detection_message(
-                                chat_id, pinned_message_id[chat_id], detection_count
+                                chat_id, pinned_message_id[chat_id], aw_detection_count
                             )
-                        previous_detection_count = detection_count
-
-                await self.bot.update_detections(new_detections)
-                self.detections = new_detections
+                        previous_detection_count = aw_detection_count
+                    self.detections = awaiting_detections
+                    await asyncio.sleep(self.bot.get_timeout(chat_id))
             except Exception as e:
                 logging.error("Failed to update detections: %s", e)
-            print(self.bot.get_timeout())
-            print(datetime.now())
-            
-            
-            await asyncio.sleep(
-                self.bot.get_timeout()
-            )  # Adjust the interval dynamically based on settings
+                raise Exception from e
+
+    def set_config(self):
+        pass
 
     async def main(self):
         """
@@ -107,16 +103,8 @@ class MainApp:
             "BOT_TOKEN",
         )
 
-        self.parser = DetectionsParser(
-            login=self.env_vars["STK_LOGIN"], passw=self.env_vars["STK_PASSWORD"]
-        )
-
-        self.bot = TelegramBot(self.env_vars["DEV_TOKEN"])
-
-        await asyncio.gather(self.check_detections_periodically(), self.bot.start())
-
 
 if __name__ == "__main__":
-    logging.info("Run asyncio from main")
+    setup_logging()
     app = MainApp()
-    asyncio.run(app.main())
+    await app.run()

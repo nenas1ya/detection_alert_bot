@@ -13,7 +13,7 @@ from aiogram.types import (
     InlineKeyboardButton,
 )
 
-logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 
 class TelegramBot:
@@ -29,10 +29,6 @@ class TelegramBot:
         self.pinned_message_id = defaultdict(lambda: None)
         self.chat_settings = defaultdict(lambda: {"timeout": 10, "notify": True})
 
-    async def start(self):
-        """
-        Initialize the bot with token, dispatcher and settings.
-        """
         self.dp.message.register(self.send_welcome, Command(commands=["start"]))
         self.dp.message.register(self.send_help, Command(commands=["help"]))
         self.dp.message.register(self.send_settings, Command(commands=["settings"]))
@@ -40,11 +36,20 @@ class TelegramBot:
         self.dp.message.register(self.ping_api, Command(commands=["ping"]))
         self.dp.message.register(self.set_timeout, Command(commands=["timeout"]))
         self.dp.message.register(self.set_notify, Command(commands=["notify"]))
-        
 
         self.dp.callback_query.register(self.callback_query_handler)
+        
+    async def start(
+        self,
+        message: Message):
+        """
+        Initialize the bot with token, dispatcher and settings.
+        """
 
         await self.dp.start_polling(self.bot)
+        print(self.chat_settings[message.chat.id])
+        self.chat_settings[message.chat.id]
+        print(self.chat_settings[message.chat.id])
 
     async def send_welcome(self, message: Message, ):
         """
@@ -71,7 +76,6 @@ class TelegramBot:
         """
         Handle callback queries from inline buttons.
         """
-        print("Callback query received:", callback_query.data)
         if callback_query.data == "settings":
             await self.send_settings(callback_query.message)
         elif callback_query.data == "ping":
@@ -92,7 +96,7 @@ class TelegramBot:
         )
 
     async def send_settings(self, message: Message):
-        
+
         settings = self.chat_settings[message.chat.id]
         await message.answer(
             text=f"Current settings:\nTimeout: {settings['timeout']} seconds\nNotifications: {'On' if settings['notify'] else 'Off'}",
@@ -100,14 +104,14 @@ class TelegramBot:
         )
 
     async def send_log(self, message: Message):
-        
+
         await message.answer(
             "Log is not yet implemented.",
             disable_notification=self.chat_settings[message.chat.id]["notify"],
         )
 
     async def ping_api(self, message: Message):
-       
+
         await message.answer("Pinging the API...")
         detections_url: str = "http://fku-ural.stk-drive.ru/api/"
         try:
@@ -125,7 +129,7 @@ class TelegramBot:
             await message.answer(f"💢 Failed to ping API: {e}")
 
     async def send_end_of_day_message(self, chat_id):
-       
+
         await self.bot.send_message(
             chat_id=chat_id,
             text="Detections have ended for today.",
@@ -133,12 +137,12 @@ class TelegramBot:
         )
 
     async def unpin_message(self, chat_id, message_id):
-       
+
         await self.bot.unpin_chat_message(chat_id=chat_id, message_id=message_id)
         disable_notification = self.chat_settings[chat_id]["notify"]
 
     async def send_detection_message(self, chat_id, detection_count):
-        
+
         message = await self.bot.send_message(
             chat_id=chat_id,
             text=f"Checked at {self.get_current_time()}, Detections count: {detection_count}",
@@ -147,16 +151,15 @@ class TelegramBot:
         return message.message_id
 
     async def edit_detection_message(self, chat_id, message_id, detection_count):
-        
+
         await self.bot.edit_message_text(
             chat_id=chat_id,
             message_id=message_id,
             text=f"Checked at {self.get_current_time()}, Detections count: {detection_count}",
         )
 
-
     async def pin_message(self, chat_id, message_id):
-        
+
         await self.bot.pin_chat_message(
             chat_id=chat_id,
             message_id=message_id,
@@ -164,27 +167,22 @@ class TelegramBot:
         )
         return message_id
 
-    async def update_detections(self, detections):
-        
-        self.detections = detections
-
     def get_current_time(self):
-        
+
         return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    def get_active_chats(self):
-        
-        return list(self.chat_settings.keys())
-
-    def get_timeout(self):
-        
+    def get_timeout(self, chat_id):
+        print(chat_id,self.chat_settings[chat_id]["timeout"])
+        print(
+            [settings["timeout"] for settings in self.chat_settings.values()]
+    )
         return min(
             [settings["timeout"] for settings in self.chat_settings.values()],
-            default=60,
+            default=30,
         )
 
     async def set_timeout(self, message: Message):
-        
+
         chat_id = message.chat.id
         try:
             _, timeout = message.text.split()
@@ -196,7 +194,7 @@ class TelegramBot:
             await message.answer("Usage: /timeout <seconds>")
 
     async def set_notify(self, message: Message):
-        
+
         chat_id = message.chat.id
         try:
             _, notify = message.text.split()

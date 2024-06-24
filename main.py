@@ -17,7 +17,7 @@ class MainApp(Config):
         super().__init__(config)
         self.config = {**self.config}
 
-        self.detections = []
+        self.detections = -1
         self.parser = DetectionsParser(self.config["Parser"])
 
         self.bot = TelegramBot(self.config["Tg"]['token'])
@@ -33,19 +33,15 @@ class MainApp(Config):
 
         while True:
             try:
-                await self.fetch_token()
 
                 awaiting_detections = await self.parser.get_detects(
-                    self.token,
                     status="AWAITING_VALIDATION",
                 )
                 invalid_detections = await self.parser.get_detects(
-                    self.token,
                     status="INVALID_DETECTION",
                     created_gte=datetime.now().date(),
                 )
                 valid_detections = await self.parser.get_detects(
-                    self.token,
                     status="VALID_DETECTION",
                     created_gte=datetime.now().date(),
                 )
@@ -107,4 +103,3 @@ class MainApp(Config):
 if __name__ == "__main__":
     setup_logging()
     app = MainApp()
-    await app.run()

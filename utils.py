@@ -3,10 +3,10 @@ import asyncio
 import logging
 import os
 from json import loads
-from asyncio import timeout
-from aiohttp import ClientSession
-from dotenv import find_dotenv, load_dotenv
 
+from aiohttp import ClientSession
+from async_timeout import timeout
+from dotenv import find_dotenv, load_dotenv
 
 logger = logging.getLogger(__name__)
 
@@ -19,10 +19,11 @@ class Config:
                 "login": get_envs("STK_LOGIN")[0],
                 "password": get_envs("STK_PASSWORD")[0],
                 "detections_api": "http://fku-ural.stk-drive.ru/api/detections/",
+                "token": None,
                 "token_api": "http://fku-ural.stk-drive.ru/api/users/token/",
                 "token_expiration": None,
             },
-            "Tg": {"token": get_envs("DEV_TOKEN")[0]},
+            "Tg": {"token": get_envs("DEV_TOKEN")[0], "timeout": 5},
         }
         self.config = {**self.default_config, **(config or {})}
         self.validate_config()
@@ -39,7 +40,7 @@ class DetectionsParser:
     def __init__(self, config=None):
         self.config = config
 
-    async def get_detects(
+    async def fetch_detects(
         self,
         status: str = "AWAITING_VALIDATION",
         created_gte: str = "2024-04-01",
@@ -90,11 +91,10 @@ class DetectionsParser:
 
                         r_data: list = loads(await response.text())
                         if response.status == 200:
-                            logging.debug("Received 200 response")
+                            logging.debug("Response 200")
                             return r_data
                         logging.error("Failed to get detections: %s", r_data)
-                        
-                        
+
         except asyncio.TimeoutError:
             logging.error("Timeout while fetching detections")
             raise
@@ -128,7 +128,7 @@ def get_envs(*envs: str) -> dict:
 
 def setup_logging():
     logging.basicConfig(
-        level=logging.INFO,
+        level=logging.DEBUG,
         format="{asctime}.{msecs:0<3.0f} | {levelname:^6} | {funcName:^14} > {message}",
         style="{",
         datefmt="%m-%d %H:%M:%S",

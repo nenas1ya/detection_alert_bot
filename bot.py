@@ -1,219 +1,99 @@
-from datetime import datetime
 import asyncio
 import logging
-import os
-from collections import defaultdict
-from aiohttp import ClientSession
-from aiogram import Bot, Dispatcher, types
+from datetime import datetime
+
+from aiogram import Bot, Dispatcher
+from aiogram.client.default import DefaultBotProperties
+from aiogram.enums import ParseMode
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.filters import Command
-from aiogram.types import (
-    Message,
-    CallbackQuery,
-    InlineKeyboardMarkup,
-    InlineKeyboardButton,
-)
+from aiogram.types import (CallbackQuery, InlineKeyboardButton,
+                           InlineKeyboardMarkup, Message)
+from utils import get_envs, setup_logging
 
 logger = logging.getLogger(__name__)
 
 
 class TelegramBot:
-    """
-    Class to handle Telegram bot functionalities including message handling,
-    pinning, unpinning messages and managing settings.
-    """
-
-    def __init__(self, bot_token):
-        self.bot = Bot(token=bot_token)
+    def __init__(self, config=None):
+        self.config = config
+        self.chats = {}
+        self.data = {
+            "await": 1337,
+            "valid": 69,
+            "invalid": 228,
+            "chars": "‧⁖⁘⁙",
+            "c_i": 0,
+        }
+        self.bot = Bot(
+            token=self.config["token"],
+            default=DefaultBotProperties(parse_mode=ParseMode.HTML),
+        )
         self.dp = Dispatcher()
-        self.detections = []
-        self.pinned_message_id = defaultdict(lambda: None)
-        self.chat_settings = defaultdict(lambda: {"timeout": 10, "notify": True})
+        self.setup_handlers()
 
-        self.dp.message.register(self.send_welcome, Command(commands=["start"]))
-        self.dp.message.register(self.send_help, Command(commands=["help"]))
-        self.dp.message.register(self.send_settings, Command(commands=["settings"]))
-        self.dp.message.register(self.send_log, Command(commands=["log"]))
-        self.dp.message.register(self.ping_api, Command(commands=["ping"]))
-        self.dp.message.register(self.set_timeout, Command(commands=["timeout"]))
-        self.dp.message.register(self.set_notify, Command(commands=["notify"]))
+    def setup_handlers(self):
+        @self.dp.message(Command("start"))
+        async def command_start_handler(message: Message):
+            keyboard = InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(
+                            text="day stats", callback_data="end_day_stats"
+                        )
+                    ]
+                ]
+            )
+            await self.bot.send_message(
+                message.chat.id,
+                f"q = awaiting detections\nc = clicked detections (valid + invalid)",
+                reply_markup=keyboard,
+            )
+            stats_msg = await self.bot.send_message(
+                message.chat.id,
+                f"<code>q: {self.data['await']} c: {self.data['invalid'] + self.data['valid']}</code>",
+            )
+            self.chats[message.chat.id] = stats_msg.message_id
+            await self.bot.pin_chat_message(stats_msg.chat.id, stats_msg.message_id)
+            await self.bot.delete_message(
+                chat_id=message.chat.id, message_id=stats_msg.message_id + 1
+            )
 
-        self.dp.callback_query.register(self.callback_query_handler)
-        
-    async def start(
-        self,
-        message: Message):
-        """
-        Initialize the bot with token, dispatcher and settings.
-        """
+        @self.dp.callback_query(lambda c: c.data == "end_day_stats")
+        async def refresh_callback_handler(callback_query: CallbackQuery):
+            await callback_query.answer(text="🍕🍕🍕")
+            await self.end_day_stats()
 
+    async def update_pin(self):
+        for chat_id in self.chats:
+            try:
+                await self.bot.edit_message_text(
+                    chat_id=chat_id,
+                    message_id=self.chats[chat_id],
+                    text=f"<code>q: {self.data['await']} c: {self.data['invalid'] + self.data['valid']} {self.data['chars'][self.data['c_i']]} </code>",
+                )
+                self.data["c_i"] = 0 if self.data["c_i"] == 3 else self.data["c_i"] + 1
+            except Exception as e:
+                await print(e)
+
+    async def end_day_stats(self):
+        for chat_id in self.chats:
+            await self.bot.send_message(
+                text=""
+                f"\n╭ <i>stats to {str(datetime.now())[-15:-7]}</i>"
+                f"\n│  in queue: <code>{self.data['await']}</code>"
+                f"\n│   rejected: <code>{self.data['invalid']}</code>"
+                f"\n│ approved: <code>{self.data['valid']}</code>"
+                f"\n╰  approve: <tg-spoiler>{(self.data['valid'] / (self.data['await'] + self.data['invalid'])  ) * 100:.2f}%</tg-spoiler>",
+                chat_id=chat_id,
+            )
+
+    async def start(self):
         await self.dp.start_polling(self.bot)
-        print(self.chat_settings[message.chat.id])
-        self.chat_settings[message.chat.id]
-        print(self.chat_settings[message.chat.id])
-
-    async def send_welcome(self, message: Message, ):
-        """
-        Start the bot and set up the message handlers.
-        """ 
-        keyboard = InlineKeyboardMarkup(
-            inline_keyboard=[
-                [
-                    InlineKeyboardButton(text="Settings", callback_data="settings"),
-                    InlineKeyboardButton(text="Ping", callback_data="ping"),
-                ],
-                [
-                    InlineKeyboardButton(text="Help", callback_data="help"),
-                    InlineKeyboardButton(text="Log", callback_data="log"),
-                ],
-            ]
-        )
-        await message.answer(
-            "Hello! I will notify you about detections.",
-            reply_markup=keyboard,
-        )
-
-    async def callback_query_handler(self, callback_query: CallbackQuery):
-        """
-        Handle callback queries from inline buttons.
-        """
-        if callback_query.data == "settings":
-            await self.send_settings(callback_query.message)
-        elif callback_query.data == "ping":
-            await self.ping_api(callback_query.message)
-        elif callback_query.data == "help":
-            await self.send_help(callback_query.message)
-        elif callback_query.data == "log":
-            await self.send_log(callback_query.message)
-        await callback_query.answer()
-
-    async def send_help(self, message: Message):
-        """
-        Send help information to the user.
-        """
-        await message.answer(
-            "Available commands:\n/start\n/help\n/settings\n/log\n/ping\n/timeout <seconds>\n/notify <on/off>",
-            disable_notification=self.chat_settings[message.chat.id]["notify"],
-        )
-
-    async def send_settings(self, message: Message):
-
-        settings = self.chat_settings[message.chat.id]
-        await message.answer(
-            text=f"Current settings:\nTimeout: {settings['timeout']} seconds\nNotifications: {'On' if settings['notify'] else 'Off'}",
-            disable_notification=self.chat_settings[message.chat.id]["notify"],
-        )
-
-    async def send_log(self, message: Message):
-
-        await message.answer(
-            "Log is not yet implemented.",
-            disable_notification=self.chat_settings[message.chat.id]["notify"],
-        )
-
-    async def ping_api(self, message: Message):
-
-        await message.answer("Pinging the API...")
-        detections_url: str = "http://fku-ural.stk-drive.ru/api/"
-        try:
-            async with ClientSession() as session:
-                start_time = datetime.now()
-                async with session.get(detections_url) as response:
-                    end_time = datetime.now()
-                    ping_time = (end_time - start_time).total_seconds() * 1000
-                    response_code = response.status
-                    await message.answer(
-                        text=f"✅ Ping to {detections_url} returned response code {response_code} in {ping_time:.2f} milliseconds.",
-                    )
-        except Exception as e:
-            logging.error("Failed to ping API: %s", e)
-            await message.answer(f"💢 Failed to ping API: {e}")
-
-    async def send_end_of_day_message(self, chat_id):
-
-        await self.bot.send_message(
-            chat_id=chat_id,
-            text="Detections have ended for today.",
-            disable_notification=self.chat_settings[chat_id]["notify"],
-        )
-
-    async def unpin_message(self, chat_id, message_id):
-
-        await self.bot.unpin_chat_message(chat_id=chat_id, message_id=message_id)
-        disable_notification = self.chat_settings[chat_id]["notify"]
-
-    async def send_detection_message(self, chat_id, detection_count):
-
-        message = await self.bot.send_message(
-            chat_id=chat_id,
-            text=f"Checked at {self.get_current_time()}, Detections count: {detection_count}",
-            disable_notification=self.chat_settings[chat_id]["notify"],
-        )
-        return message.message_id
-
-    async def edit_detection_message(self, chat_id, message_id, detection_count):
-
-        await self.bot.edit_message_text(
-            chat_id=chat_id,
-            message_id=message_id,
-            text=f"Checked at {self.get_current_time()}, Detections count: {detection_count}",
-        )
-
-    async def pin_message(self, chat_id, message_id):
-
-        await self.bot.pin_chat_message(
-            chat_id=chat_id,
-            message_id=message_id,
-            disable_notification=self.chat_settings[chat_id]["notify"],
-        )
-        return message_id
-
-    def get_current_time(self):
-
-        return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    def get_timeout(self, chat_id):
-        print(chat_id,self.chat_settings[chat_id]["timeout"])
-        print(
-            [settings["timeout"] for settings in self.chat_settings.values()]
-    )
-        return min(
-            [settings["timeout"] for settings in self.chat_settings.values()],
-            default=30,
-        )
-
-    async def set_timeout(self, message: Message):
-
-        chat_id = message.chat.id
-        try:
-            _, timeout = message.text.split()
-            timeout = int(timeout)
-            self.chat_settings[chat_id]["timeout"] = timeout
-            await message.answer(f"Timeout has been set to {timeout} seconds.")
-        except Exception as e:
-            logging.error("Failed to set timeout: %s", e)
-            await message.answer("Usage: /timeout <seconds>")
-
-    async def set_notify(self, message: Message):
-
-        chat_id = message.chat.id
-        try:
-            _, notify = message.text.split()
-            notify = notify.lower() == "on"
-            self.chat_settings[chat_id]["notify"] = notify
-            await message.answer(
-                f"Notifications have been turned {'on' if notify else 'off'}."
-            )
-        except ValueError:
-            await message.answer("Invalid notification value. Usage: /notify <on/off>")
-        except IndexError:
-            await message.answer(
-                "Notification value is missing. Usage: /notify <on/off>"
-            )
-        except Exception as e:
-            logging.error("Failed to set notifications: %s", e)
-            await message.answer("An error occurred. Please try again.")
 
 
 if __name__ == "__main__":
-    bot_token = os.getenv("BOT_TOKEN")
-    asyncio.run(TelegramBot(bot_token).start())
+    setup_logging()
+    config = {"token": get_envs("DEV_TOKEN")[0]}
+    bot = TelegramBot(config)
+    asyncio.run(bot.start())

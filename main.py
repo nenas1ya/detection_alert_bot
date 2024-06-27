@@ -29,8 +29,6 @@ class MainApp(Config):
         with the current detection count.
         """
 
-        previous_detection_count = 0
-
         while True:
             try:
 

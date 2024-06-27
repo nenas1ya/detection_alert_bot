@@ -23,7 +23,7 @@ class Config:
                 "token_api": "http://fku-ural.stk-drive.ru/api/users/token/",
                 "token_expiration": None,
             },
-            "Tg": {"token": get_envs("DEV_TOKEN")[0], "timeout": 5},
+            "Tg": {"token": get_envs("BOT_TOKEN")[0], "timeout": 5},
         }
         self.config = {**self.default_config, **(config or {})}
         self.validate_config()

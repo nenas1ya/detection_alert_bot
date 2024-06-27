@@ -50,7 +50,7 @@ class MainApp(Config):
                 self.bot.data["valid"] = len(valid_detections)
                 await self.bot.update_pin()
 
-                await asyncio.sleep(0.25)
+                await asyncio.sleep(0.4)
             except Exception as e:
                 logging.error("Failed to update detections: %s", e)
                 raise

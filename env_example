@@ -1,7 +1,10 @@
 #
-#   save as .env
+# save as .env
 #
+
 
 STK_LOGIN=''
 STK_PASSWORD =''
+DUTSSD_LOGIN=''
+DUTSSD_PASSWORD=''
 BOT_TOKEN=''

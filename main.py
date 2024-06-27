@@ -1,171 +1,66 @@
 import asyncio
 import logging
-import os
-import sys
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 
-from aiogram import Bot, Dispatcher
-from aiogram.filters import Command, CommandObject, CommandStart
-from aiogram.types import (
-    InlineQuery,
-    InlineQueryResultArticle,
-    InputTextMessageContent,
-    Message,
-)
-from dotenv import find_dotenv, load_dotenv
-
-from stk_parser import get_detections, get_stk_token
-
-load_dotenv(find_dotenv(), verbose=True)
-BOT_TOKEN: str = os.environ.get("BOT_TOKEN", "ERR")
-if BOT_TOKEN == "ERR":
-    print("cant get bot token from dotenv")
-    print(f"token: {BOT_TOKEN}")
-    print(f"find_dotenv: {find_dotenv()}")
-    print(f"load_dotenv: {load_dotenv()}")
-    sys.exit()
-else:
-    dp = Dispatcher()
-    bot = Bot(BOT_TOKEN)
+from async_timeout import timeout
+from bot import TelegramBot
+from utils import Config, DetectionsParser, get_envs, setup_logging
 
 
-async def main() -> None:
-    await dp.start_polling(bot)
-
-
-@dp.message(Command("on", prefix="\\/!."))
-async def on_handler(message: Message, command: CommandObject) -> None:
-    """contious checking detections and inform in telegram
-
-    :param Message message: returned message
-    :param CommandObject command: returned command with args
+class MainApp(Config):
     """
-    global handled
+    Main application class to handle the periodic checking of detections
+    and interfacing with the Telegram bot.
+    """
 
-    token = await get_stk_token()
-    new_msg_ = True
-    exterminate_timer = 1200  # in seconds
+    def __init__(self, config=None):
 
-    t = command.args
-    if t:
-        match t[-1]:
-            case "s":  # 30s
-                timeout = int(t[:-1])
-                timeout_hint = f"{t[:-1]} seconds"
-            case "m":  # 10m
-                timeout = int(t[:-1]) * 60
-                timeout_hint = f"{t[:-1]} minutes"
-            case "h":  # 1h
-                timeout = int(t[:-1]) * 60 * 60
-                timeout_hint = f"{t[:-1]} hour"
-            case _:  # 137
-                timeout = int(t)
-                timeout_hint = f"{t} seconds"
-    else:
-        timeout = 58
-        timeout_hint = "1 minute"
+        super().__init__(config)
+        self.config = {**self.config}
 
-    if message.chat.id not in handled:
-        handled.append(message.chat.id)
-        await bot.send_message(
-            message.chat.id,
-            f"update every {timeout_hint}\n",
-            disable_notification=True,
-        )
-        print(message.chat.id, "added, now work with", handled)
-    else:
-        await bot.send_message(
-            text=f"already on, first use /off",
-            chat_id=message.chat.id,
-            parse_mode="MarkdownV2",
-        )
-        print(f"already work with {message.chat.id}, full:", handled)
-        return
-    while message.chat.id in handled:
-        try:
-            status, d, d_count = await get_detections(token)
-            if status != 200:
-                # bad request
-                token = await get_stk_token()
-                print(f"taken new stk token: ..{token[-8:]}")
-                continue
+        self.detections = -1
+        self.parser = DetectionsParser(self.config["Parser"])
 
-            d_count = "zero" if not d_count else d_count
-            d_now = f'`{datetime.now(tz=timezone(timedelta(hours=5))).strftime("%H:%M:%S")}` : {d_count} detections'
+        self.bot = TelegramBot(self.config["Tg"])
 
-            if new_msg_:
-                sended = await bot.send_message(
-                    message.chat.id,
-                    d_now,
-                    disable_notification=True,
-                    parse_mode="MarkdownV2",
+    async def check_n_update_detections(self):
+        """
+        Periodically checks for detections and updates the Telegram bot
+        with the current detection count.
+        """
+
+        while True:
+            try:
+
+                awaiting_detections = await self.parser.fetch_detects(
+                    status="AWAITING_VALIDATION",
                 )
-                new_msg_ = False
-            else:
-                if (
-                    int(
-                        datetime.timestamp(
-                            datetime.now(tz=timezone(timedelta(hours=5)))
-                        )
-                    )
-                    - int(datetime.timestamp(sended.date))
-                ) >= exterminate_timer:
-                    # delete old messages and send new
-                    await bot.delete_message(sended.chat.id, sended.message_id)
-                    sended = await bot.send_message(
-                        message.chat.id,
-                        d_now,
-                        disable_notification=True,
-                        parse_mode="MarkdownV2",
-                    )
+                invalid_detections = await self.parser.fetch_detects(
+                    status="INVALID_DETECTION",
+                    created_gte=datetime.now().date(),
+                )
+                valid_detections = await self.parser.fetch_detects(
+                    status="VALID_DETECTION",
+                    created_gte=datetime.now().date(),
+                )
+                self.bot.data["await"] = len(awaiting_detections)
+                self.bot.data["invalid"] = len(invalid_detections)
+                self.bot.data["valid"] = len(valid_detections)
+                await self.bot.update_pin()
 
-                else:
-                    if sended:
-                        await bot.edit_message_text(
-                            d_now,
-                            sended.chat.id,
-                            sended.message_id,
-                            parse_mode="MarkdownV2",
-                        )
-        except Exception as e:
-            print(e)
-            continue
-        await asyncio.sleep(timeout)  # in seconds
+                await asyncio.sleep(0.4)
+            except Exception as e:
+                logging.error("Failed to update detections: %s", e)
+                raise
 
 
-@dp.message(Command("off", prefix="\\/!."))
-async def off_handler(message: Message):
-    global handled
-    handled.remove(message.chat.id)
-    await bot.send_message(
-        message.chat.id,
-        text="sleepy now",
-        disable_notification=True,
-        parse_mode="MarkdownV2",
-    )
-    print(message.chat.id, "removed, now work with", handled)
-
-
-@dp.inline_query()
-async def inline_handler(inline_query: InlineQuery):
-    token = await get_stk_token()
-    status, d_awaiting, await_count = await get_detections(token)
-    result = [
-        InlineQueryResultArticle(
-            id=str(datetime.now().timestamp() + 10),
-            title="awaiting detections",
-            input_message_content=InputTextMessageContent(
-                message_text=f"{await_count} awaiting detections"
-            ),
-        )
-    ]
-    await inline_query.answer(result, is_personal=True, cache_time=30)  # type: ignore
+async def main():
+    app = MainApp()
+    # Start the bot and data updater concurrently
+    await asyncio.gather(app.bot.start(), app.check_n_update_detections())
 
 
 if __name__ == "__main__":
-    print(f'{datetime.now(tz=timezone(timedelta(hours=5))).strftime("%H:%M:%S")}')
+    setup_logging()
 
-    handled: list[int] = []
-
-    logging.basicConfig(level=logging.INFO, stream=sys.stdout)
     asyncio.run(main())

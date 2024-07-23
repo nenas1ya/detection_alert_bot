@@ -35,29 +35,39 @@ class TelegramBot:
     def setup_handlers(self):
         @self.dp.message(Command("start"))
         async def command_start_handler(message: Message):
-            keyboard = InlineKeyboardMarkup(
-                inline_keyboard=[
-                    [
-                        InlineKeyboardButton(
-                            text="day stats", callback_data="end_day_stats"
-                        )
+            if (
+                message.chat.id == -1001973533511
+                or message.chat.id == -1002144147025
+                or message.chat.id == 6359870347
+                or message.chat.id == -1002242557932
+            ):
+
+                keyboard = InlineKeyboardMarkup(
+                    inline_keyboard=[
+                        [
+                            InlineKeyboardButton(
+                                text="day stats", callback_data="end_day_stats"
+                            )
+                        ]
                     ]
-                ]
-            )
-            await self.bot.send_message(
-                message.chat.id,
-                f"q = awaiting detections\nc = clicked detections (valid + invalid)",
-                reply_markup=keyboard,
-            )
-            stats_msg = await self.bot.send_message(
-                message.chat.id,
-                f"<code>q: {self.data['await']} c: {self.data['invalid'] + self.data['valid']}</code>",
-            )
-            self.chats[message.chat.id] = stats_msg.message_id
-            await self.bot.pin_chat_message(stats_msg.chat.id, stats_msg.message_id)
-            await self.bot.delete_message(
-                chat_id=message.chat.id, message_id=stats_msg.message_id + 1
-            )
+                )
+                await self.bot.send_message(
+                    message.chat.id,
+                    f"q = awaiting detections\nc = clicked detections (valid + invalid)",
+                    reply_markup=keyboard,
+                )
+                stats_msg = await self.bot.send_message(
+                    message.chat.id,
+                    f"<code>q: {self.data['await']} c: {self.data['invalid'] + self.data['valid']}</code>",
+                )
+                self.chats[message.chat.id] = stats_msg.message_id
+                await self.bot.pin_chat_message(stats_msg.chat.id, stats_msg.message_id)
+                await self.bot.delete_message(
+                    chat_id=message.chat.id, message_id=stats_msg.message_id + 1
+                )
+            else:
+                print(403, message.chat.id)
+                await message.answer("forbiden")
 
         @self.dp.callback_query(lambda c: c.data == "end_day_stats")
         async def refresh_callback_handler(callback_query: CallbackQuery):
